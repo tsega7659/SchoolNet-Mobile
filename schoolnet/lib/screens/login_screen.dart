@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     Positioned(
                       bottom: -15,
-                      child: Container(
+                      child: SizedBox(
                         width: 300,
                         height: 300,
                         child: Center(
@@ -213,15 +213,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       );
                     },
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFB188E3),
+                    ),
                     child: const Text(
                       " Sign up",
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFFB188E3),
                     ),
                   ),
                 ],

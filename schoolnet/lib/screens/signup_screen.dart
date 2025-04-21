@@ -42,7 +42,7 @@ class SignUpScreen extends StatelessWidget {
                     ),
                     Positioned(
                       bottom: -75, 
-                      child: Container(
+                      child: SizedBox(
                         width: 400,
                         height: 400,
                         child: Center(
@@ -174,16 +174,16 @@ class SignUpScreen extends StatelessWidget {
                           builder: (context) => const LoginScreen(),
                         ),
                       );
-                    }, 
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFB188E3),
+                    ), 
                     child: const Text(
                       "Login",
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFFB188E3),
                     ),
                   ),
                 ],
