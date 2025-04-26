@@ -25,7 +25,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   void initState() {
     super.initState();
-    
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     initAppLinks();
   }
