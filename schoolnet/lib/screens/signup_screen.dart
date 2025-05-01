@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -55,7 +54,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     // Listen for incoming links
     _sub = appLinks.uriLinkStream.listen(
       (uri) {
-        if (uri != null && uri.path == '/verify') {
+        if (uri.path == '/verify') {
           final token = uri.queryParameters['token'] ?? '';
           verifyEmail(token);
         }
@@ -263,7 +262,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Container(
                   margin: EdgeInsets.only(bottom: 20),
                   width: double.infinity,
-                  height: 400,
+                  height: 350,
                   decoration: const BoxDecoration(
                     color: Color(0xFFB188E3),
                     borderRadius: BorderRadius.only(
@@ -280,17 +279,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           'Sign-Up',
                           style: TextStyle(
                             fontFamily: "WorkSans",
-                            fontSize: 80,
+                            fontSize: 60,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF4A2C2A),
                           ),
                         ),
                       ),
                       Positioned(
-                        bottom: -75,
+                        bottom: -55,
                         child: SizedBox(
-                          width: 400,
-                          height: 400,
+                          width: 300,
+                          height: 300,
                           child: Center(
                             child: Image.asset(
                               'assets/images/signup_image.png',
@@ -302,7 +301,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 30),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: TextFormField(

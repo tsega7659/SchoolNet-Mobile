@@ -11,18 +11,20 @@ class SchoolFilterScreen extends StatefulWidget {
 class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  final TextEditingController _locationController = TextEditingController();
+  late final List<int> _pages;
 
-  // Store filter answers
-  final Map<String, dynamic> filterAnswers = {
-    'grade': null,
-    'curriculum': null,
-    'schoolType': null,
-    'location': null,
-    'language': null,
-    'facilities': null,
-    'importance': null,
-    'schedule': null,
-    'priceRange': null,
+  // Store filter answers as lists to allow multiple selections
+  final Map<String, List<String>> filterAnswers = {
+    'grade': [],
+    'curriculum': [],
+    'schoolType': [],
+    'location': [],
+    'language': [],
+    'facilities': [],
+    'importance': [],
+    'schedule': [],
+    'priceRange': [],
   };
 
   final List<Map<String, dynamic>> questions = [
@@ -37,16 +39,11 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
       'key': 'curriculum',
     },
     {
-      'question': 'Preferred school type',
-      'options': ['Private', 'Public', 'Middle School', 'High School'],
+      'question': 'Which type of School',
+      'options': ['public', 'private'],
       'key': 'schoolType',
     },
-    {
-      'question': 'Preferred location or neighborhood',
-      'type': 'dropdown',
-      'options': ['Bole', 'Gerji', 'CMC', 'Sarbet', 'Ayat', 'Megenagna'],
-      'key': 'location',
-    },
+    {'question': 'Select your Location', 'type': 'search', 'key': 'location'},
     {
       'question': 'Price Range (ETB)',
       'type': 'dropdown',
@@ -76,14 +73,14 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
   ];
 
   bool _canMoveNext() {
-    return filterAnswers[questions[_currentPage]['key']] != null;
+    return filterAnswers[questions[_currentPage]['key']]!.isNotEmpty;
   }
 
   void _nextPage() {
     if (!_canMoveNext()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select an option to continue'),
+          content: Text('Please select at least one option to continue'),
           backgroundColor: Color(0xFF4A2C2A),
         ),
       );
@@ -101,7 +98,7 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
       // Check if all questions are answered
       final unansweredQuestions =
           questions
-              .where((q) => filterAnswers[q['key']] == null)
+              .where((q) => filterAnswers[q['key']]!.isEmpty)
               .map((q) => q['question'])
               .toList();
 
@@ -115,7 +112,6 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
         return;
       }
 
-      // Navigate to results screen with filter answers
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -137,271 +133,348 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
     }
   }
 
+  void _skipToHome() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => FilteredSchoolsScreen(filterAnswers: filterAnswers),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = List<int>.generate(questions.length, (index) => index);
+  }
+
+  @override
+  void dispose() {
+    _locationController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF4A2C2A)),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Column(
-        children: [
-          Text(
-            'Please Answer\nThe Following\nquestion',
-            style: TextStyle(
-              fontSize: 34,
-              fontFamily: "DMSans",
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF290851),
-              height: 1.2,
-            ),
-          ),
-          SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: SizedBox(
-              height: 32,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: () {
-                  // Calculate the range of numbers to display (e.g., 1-3, 4-6, etc.)
-                  int groupIndex = _currentPage ~/ 3;
-                  int startNumber = groupIndex * 3 + 1;
-                  int endNumber = (startNumber + 2).clamp(1, questions.length);
-
-                  // Generate the list of indicators for the current range
-                  List<Widget> indicators = [];
-                  for (int i = startNumber - 1; i < endNumber; i++) {
-                    indicators.add(
-                      Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color:
-                                  i <= _currentPage
-                                      ? const Color(0xFFB188E3)
-                                      : Colors.transparent,
-                              border: Border.all(
-                                color:
-                                    i <= _currentPage
-                                        ? const Color(0xFFB188E3)
-                                        : const Color(0xFFE0E0E0),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Text(
+                    '${_currentPage + 1} of ${questions.length}',
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ),
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (int page) {
+                      setState(() {
+                        _currentPage = page;
+                      });
+                    },
+                    itemCount: questions.length,
+                    itemBuilder: (context, index) {
+                      final question = questions[index];
+                      return Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              question['question'],
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFB188E3),
                               ),
+                              textAlign: TextAlign.center,
                             ),
-                            child: Center(
-                              child: Text(
-                                '${i + 1}',
-                                style: TextStyle(
-                                  color:
-                                      i <= _currentPage
-                                          ? Colors.white
-                                          : const Color(0xFFE0E0E0),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (i < endNumber - 1)
-                            Container(
-                              width: 80,
-                              height: 4,
-                              margin: const EdgeInsets.symmetric(horizontal: 8),
-                              decoration: BoxDecoration(
-                                color:
-                                    i < _currentPage
-                                        ? const Color(0xFFB188E3)
-                                        : const Color(0xFFE0E0E0),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                        ],
-                      ),
-                    );
-                  }
-                  return indicators;
-                }(),
-              ),
-            ),
-          ),
-          Expanded(
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height,
-              child: PageView.builder(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (int page) {
-                  setState(() {
-                    _currentPage = page;
-                  });
-                },
-                itemCount: questions.length,
-                itemBuilder: (context, index) {
-                  final question = questions[index];
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        Text(
-                          question['question'],
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontFamily: "WorkSans",
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF170F49).withOpacity(0.8),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        if (question['type'] == 'dropdown')
-                          Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: const Color(0xFFB188E3),
-                              ),
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: DropdownButton<String>(
-                              value: filterAnswers[question['key']],
-                              isExpanded: true,
-                              underline: const SizedBox(),
-                              hint: Text(
-                                'Select ${question['question']}',
-                                style: TextStyle(color: Colors.grey[600]),
-                              ),
-                              items:
-                                  (question['options'] as List<String>).map((
-                                    String value,
-                                  ) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(
-                                        value,
-                                        style: TextStyle(fontSize: 20),
+                            const SizedBox(height: 48),
+                            if (question['type'] == 'search')
+                              Column(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: const Color(0xFFB188E3),
                                       ),
-                                    );
-                                  }).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  filterAnswers[question['key']] = newValue;
-                                });
-                              },
-                            ),
-                          )
-                        else
-                          Center(
-                            child: Column(
-                              children:
-                                  (question['options'] as List<String>)
-                                      .map(
-                                        (option) => Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 16,
-                                          ),
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                filterAnswers[question['key']] =
-                                                    option;
-                                              });
-                                            },
+                                      borderRadius: BorderRadius.circular(25),
+                                    ),
+                                    child: TextField(
+                                      controller: _locationController,
+                                      decoration: InputDecoration(
+                                        hintText: 'Search',
+                                        hintStyle: TextStyle(
+                                          color: Colors.grey[600],
+                                        ),
+                                        prefixIcon: const Icon(
+                                          Icons.search,
+                                          color: Color(0xFFB188E3),
+                                        ),
+                                        suffixIcon: const Icon(
+                                          Icons.location_pin,
+                                          color: Color(0xFFB188E3),
+                                        ),
+                                        border: InputBorder.none,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 15,
+                                              horizontal: 20,
+                                            ),
+                                      ),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          if (value.isNotEmpty) {
+                                            filterAnswers[question['key']] = [
+                                              value,
+                                            ];
+                                          } else {
+                                            filterAnswers[question['key']] = [];
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 48),
+                                  // Placeholder for the illustration
+                                  Container(
+                                    height: 300,
+                                    width: 300,
+                                    alignment: Alignment.center,
+                                    child: Image.asset(
+                                      'assets/images/select_location_image.png',
+                                      fit: BoxFit.cover,
+                                      width: 200,
+                                      height: 200,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else if (question['type'] == 'dropdown')
+                              Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: const Color(0xFFB188E3),
+                                  ),
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                child: DropdownButton<String>(
+                                  value:
+                                      filterAnswers[question['key']]!.isEmpty
+                                          ? null
+                                          : filterAnswers[question['key']]![0],
+                                  isExpanded: true,
+                                  underline: const SizedBox(),
+                                  hint: Text(
+                                    'Select ${question['question']}',
+                                    style: TextStyle(color: Colors.grey[600]),
+                                  ),
+                                  items:
+                                      (question['options'] as List<String>).map(
+                                        (String value) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Text(
+                                              value,
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ).toList(),
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      if (newValue != null) {
+                                        filterAnswers[question['key']] = [
+                                          newValue,
+                                        ];
+                                      }
+                                    });
+                                  },
+                                ),
+                              )
+                            else
+                              Column(
+                                children:
+                                    (question['options'] as List<String>)
+                                        .map(
+                                          (option) => Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 16,
+                                            ),
                                             child: SizedBox(
-                                              width: 300,
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 24,
-                                                      vertical: 12,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  border: Border.all(
-                                                    color: const Color(
-                                                      0xFFB188E3,
-                                                    ),
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(25),
-                                                  color:
-                                                      filterAnswers[question['key']] ==
-                                                              option
+                                              width: double.infinity,
+                                              child: ElevatedButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    // Toggle selection
+                                                    if (filterAnswers[question['key']]!
+                                                        .contains(option)) {
+                                                      filterAnswers[question['key']]!
+                                                          .remove(option);
+                                                    } else {
+                                                      filterAnswers[question['key']]!
+                                                          .add(option);
+                                                    }
+                                                  });
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      filterAnswers[question['key']]!
+                                                              .contains(option)
                                                           ? const Color(
                                                             0xFFB188E3,
                                                           )
                                                           : Colors.white,
+                                                  side: const BorderSide(
+                                                    color: Color(0xFFB188E3),
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          25,
+                                                        ),
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 12,
+                                                      ),
                                                 ),
-                                                child: Center(
-                                                  // Centers the text inside the button
-                                                  child: Text(
-                                                    option,
-                                                    style: TextStyle(
-                                                      fontSize: 20,
-                                                      color:
-                                                          filterAnswers[question['key']] ==
-                                                                  option
-                                                              ? Colors.white
-                                                              : const Color(
-                                                                0xFF4A2C2A,
-                                                              ),
-                                                    ),
+                                                child: Text(
+                                                  option,
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    color:
+                                                        filterAnswers[question['key']]!
+                                                                .contains(
+                                                                  option,
+                                                                )
+                                                            ? Colors.white
+                                                            : Colors.black,
                                                   ),
                                                 ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      )
-                                      .toList(),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (_currentPage > 0)
-                  IconButton(
-                    onPressed: _previousPage,
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Color(0xFF4A2C2A),
-                      size: 44,
-                    ),
-                  )
-                else
-                  const SizedBox(width: 48),
-                IconButton(
-                  onPressed: _nextPage,
-                  icon: Icon(
-                    _currentPage == questions.length - 1
-                        ? Icons.check_circle
-                        : Icons.arrow_forward,
-                    color:
-                        _canMoveNext()
-                            ? const Color.fromARGB(255, 107, 16, 219)
-                            : Colors.grey,
-                    size: 44,
+                                        )
+                                        .toList(),
+                              ),
+                            const SizedBox(height: 50),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+            Positioned(
+              top: 28,
+              left: 20,
+              child:
+                  _currentPage > 0
+                      ? IconButton(
+                        onPressed: _previousPage,
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          color: Color(0xFFB188E3),
+                          size: 30,
+                        ),
+                      )
+                      : const SizedBox.shrink(),
+            ),
+            Positioned(
+              top: 28,
+              right: 20,
+              child: TextButton(
+                onPressed: _skipToHome,
+                child: const Text(
+                  'Skip',
+                  style: TextStyle(fontSize: 20, color: Color(0xFFB188E3)),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 200,
+              left: 0,
+              right: 0,
+              child: Container(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _pages.length,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          height: 8,
+                          width: _currentPage == index ? 24 : 8,
+                          decoration: BoxDecoration(
+                            color:
+                                _currentPage == index
+                                    ? const Color(0xFFB188E3)
+                                    : const Color(0xFF4A2C2A).withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 50,
+              right: 20,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFB188E3),
+                      Color.fromARGB(255, 74, 42, 69),
+                    ],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ElevatedButton(
+                  onPressed: _nextPage,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  child: const Text(
+                    'Next',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

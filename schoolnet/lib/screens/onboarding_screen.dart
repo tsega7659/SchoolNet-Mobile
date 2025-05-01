@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:schoolnet/routes/app_route..dart';
 import 'login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -53,9 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+      Navigator.of(context).pushReplacementNamed(AppRoutes.preLogin);
     }
   }
 
@@ -74,15 +73,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             },
             itemCount: _pages.length,
             itemBuilder: (context, index) {
-              return OnboardingPageWidget(page: _pages[index]);
+              return OnboardingPageWidget(
+                page: _pages[index],
+                isLastPage: index == _pages.length - 1,
+                onNext: _nextPage,
+              );
             },
           ),
           Positioned(
-            bottom: 0,
+            bottom: 250,
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.all(24.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -98,42 +100,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           color:
                               _currentPage == index
-                                  ? const Color(0xFF4A2C2A)
+                                  ? const Color(0xFFB188E3)
                                   : const Color(0xFF4A2C2A).withOpacity(0.4),
                           borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF4A2C2A), Color(0xFFB188E3)],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _nextPage,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        _currentPage == _pages.length - 1
-                            ? 'Get Started'
-                            : 'Next',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'WorkSans',
-                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -164,36 +133,70 @@ class OnboardingPage {
 
 class OnboardingPageWidget extends StatelessWidget {
   final OnboardingPage page;
+  final bool isLastPage;
+  final VoidCallback onNext;
 
-  const OnboardingPageWidget({Key? key, required this.page}) : super(key: key);
+  const OnboardingPageWidget({
+    Key? key,
+    required this.page,
+    required this.isLastPage,
+    required this.onNext,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       color: const Color(0xFFF5F0FF),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 32),
+          Padding(
+            padding: const EdgeInsets.only(top: 30),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Skip',
+                    style: TextStyle(
+                      fontFamily: 'WorkSans',
+                      color: Color(0xFFB188E3),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.05),
           // Illustration
           SvgPicture.asset(
             page.illustration,
-            height: MediaQuery.of(context).size.height * 0.3,
+            height: MediaQuery.of(context).size.height * 0.35,
             fit: BoxFit.contain,
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 50),
           // Title
           Text(
             page.title,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               color: Color(0xFF4A2C2A),
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               fontFamily: 'WorkSans',
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 30),
+          // Description
           Text(
             page.description,
             textAlign: TextAlign.center,
@@ -203,6 +206,48 @@ class OnboardingPageWidget extends StatelessWidget {
               height: 1.5,
               fontFamily: 'WorkSans',
             ),
+          ),
+          const SizedBox(height: 150),
+          // Next Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                height: 56,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFFB188E3),
+                        Color.fromARGB(255, 74, 42, 69),
+                      ],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: onNext,
+                    child: Text(
+                      isLastPage ? 'Get Started' : 'Next',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
