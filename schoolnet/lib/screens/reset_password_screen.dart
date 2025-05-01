@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:schoolnet/screens/login_screen.dart';
-import 'package:schoolnet/utils/responsive_utils.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String token;
@@ -82,31 +81,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             builder:
                 (context) => AlertDialog(
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      ResponsiveUtils.getResponsiveWidth(context, 20),
-                    ),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   backgroundColor: Colors.white,
-                  title: Text(
+                  title: const Text(
                     'Success',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF4A2C2A),
-                      fontSize: ResponsiveUtils.getResponsiveFontSize(
-                        context,
-                        18,
-                      ),
                     ),
                   ),
-                  content: Text(
+                  content: const Text(
                     'Your password has been reset successfully.',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: ResponsiveUtils.getResponsiveFontSize(
-                        context,
-                        16,
-                      ),
-                    ),
+                    style: TextStyle(color: Colors.grey),
                   ),
                   actions: [
                     TextButton(
@@ -119,15 +106,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           (route) => false,
                         );
                       },
-                      child: Text(
+                      child: const Text(
                         'Login',
                         style: TextStyle(
                           color: Color(0xFFB188E3),
                           fontWeight: FontWeight.bold,
-                          fontSize: ResponsiveUtils.getResponsiveFontSize(
-                            context,
-                            16,
-                          ),
                         ),
                       ),
                     ),
@@ -142,36 +125,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             context: context,
             builder:
                 (context) => AlertDialog(
-                  title: Text(
-                    'Error',
-                    style: TextStyle(
-                      fontSize: ResponsiveUtils.getResponsiveFontSize(
-                        context,
-                        18,
-                      ),
-                    ),
-                  ),
-                  content: Text(
-                    error,
-                    style: TextStyle(
-                      fontSize: ResponsiveUtils.getResponsiveFontSize(
-                        context,
-                        16,
-                      ),
-                    ),
-                  ),
+                  title: const Text('Error'),
+                  content: Text(error),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        'OK',
-                        style: TextStyle(
-                          fontSize: ResponsiveUtils.getResponsiveFontSize(
-                            context,
-                            16,
-                          ),
-                        ),
-                      ),
+                      child: const Text('OK'),
                     ),
                   ],
                 ),
@@ -185,36 +144,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           context: context,
           builder:
               (context) => AlertDialog(
-                title: Text(
-                  'Error',
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.getResponsiveFontSize(
-                      context,
-                      18,
-                    ),
-                  ),
-                ),
-                content: Text(
-                  'An error occurred. Please try again.',
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.getResponsiveFontSize(
-                      context,
-                      16,
-                    ),
-                  ),
-                ),
+                title: const Text('Error'),
+                content: const Text('An error occurred. Please try again.'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'OK',
-                      style: TextStyle(
-                        fontSize: ResponsiveUtils.getResponsiveFontSize(
-                          context,
-                          16,
-                        ),
-                      ),
-                    ),
+                    child: const Text('OK'),
                   ),
                 ],
               ),
@@ -235,11 +170,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  margin: EdgeInsets.only(
-                    bottom: ResponsiveUtils.getResponsiveHeight(context, 20),
-                  ),
+                  margin: const EdgeInsets.only(bottom: 20),
                   width: double.infinity,
-                  height: ResponsiveUtils.getResponsiveHeight(context, 400),
+                  height: 400,
                   decoration: const BoxDecoration(
                     color: Color(0xFFB188E3),
                     borderRadius: BorderRadius.only(
@@ -250,36 +183,24 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Positioned(
-                        top: ResponsiveUtils.getResponsiveHeight(context, 65),
+                      const Positioned(
+                        top: 65,
                         child: Text(
                           'Set New\nPassword',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: "WorkSans",
-                            fontSize: ResponsiveUtils.getResponsiveFontSize(
-                              context,
-                              60,
-                            ),
+                            fontSize: 60,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF4A2C2A),
                           ),
                         ),
                       ),
                       Positioned(
-                        bottom: ResponsiveUtils.getResponsiveHeight(
-                          context,
-                          -10,
-                        ),
+                        bottom: -10,
                         child: SizedBox(
-                          width: ResponsiveUtils.getResponsiveWidth(
-                            context,
-                            300,
-                          ),
-                          height: ResponsiveUtils.getResponsiveHeight(
-                            context,
-                            300,
-                          ),
+                          width: 300,
+                          height: 300,
                           child: Center(
                             child: Image.asset(
                               'assets/images/forgot_password.png',
@@ -291,37 +212,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ],
                   ),
                 ),
-                SizedBox(
-                  height: ResponsiveUtils.getResponsiveHeight(context, 20),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: ResponsiveUtils.getResponsivePadding(
-                      context,
-                      30,
-                    ),
-                  ),
+                const SizedBox(height: 20),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 30),
                   child: Text(
                     'Must be at least 8 characters',
-                    style: TextStyle(
-                      fontSize: ResponsiveUtils.getResponsiveFontSize(
-                        context,
-                        16,
-                      ),
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                 ),
-                SizedBox(
-                  height: ResponsiveUtils.getResponsiveHeight(context, 30),
-                ),
+                const SizedBox(height: 30),
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: ResponsiveUtils.getResponsivePadding(
-                      context,
-                      30,
-                    ),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: TextFormField(
                     controller: _passwordController,
                     validator: _validatePassword,
@@ -334,9 +235,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       hintText: 'Enter your new password',
                       labelText: 'New Password',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          ResponsiveUtils.getResponsiveWidth(context, 50),
-                        ),
+                        borderRadius: BorderRadius.circular(50),
                         borderSide: const BorderSide(color: Colors.grey),
                       ),
                       suffixIcon: IconButton(
@@ -351,16 +250,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                   ),
                 ),
-                SizedBox(
-                  height: ResponsiveUtils.getResponsiveHeight(context, 20),
-                ),
+                const SizedBox(height: 20),
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: ResponsiveUtils.getResponsivePadding(
-                      context,
-                      30,
-                    ),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: TextFormField(
                     controller: _confirmPasswordController,
                     validator: _validateConfirmPassword,
@@ -371,11 +263,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         color: Colors.grey,
                       ),
                       hintText: 'Confirm your new password',
-                      labelText: 'Confirm New Password',
+                      labelText: 'Confirm Password',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          ResponsiveUtils.getResponsiveWidth(context, 50),
-                        ),
+                        borderRadius: BorderRadius.circular(50),
                         borderSide: const BorderSide(color: Colors.grey),
                       ),
                       suffixIcon: IconButton(
@@ -390,28 +280,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                   ),
                 ),
-                SizedBox(
-                  height: ResponsiveUtils.getResponsiveHeight(context, 40),
-                ),
+                const SizedBox(height: 40),
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: ResponsiveUtils.getResponsivePadding(
-                      context,
-                      30,
-                    ),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: Container(
                     width: double.infinity,
-                    height: ResponsiveUtils.getResponsiveHeight(context, 50),
+                    height: 50,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFF4A2C2A), Color(0xFFB188E3)],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       ),
-                      borderRadius: BorderRadius.circular(
-                        ResponsiveUtils.getResponsiveWidth(context, 25),
-                      ),
+                      borderRadius: BorderRadius.circular(25),
                     ),
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleResetPassword,
@@ -419,35 +300,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            ResponsiveUtils.getResponsiveWidth(context, 25),
-                          ),
+                          borderRadius: BorderRadius.circular(25),
                         ),
                       ),
                       child:
                           _isLoading
-                              ? SizedBox(
-                                width: ResponsiveUtils.getResponsiveWidth(
-                                  context,
-                                  20,
-                                ),
-                                height: ResponsiveUtils.getResponsiveHeight(
-                                  context,
-                                  20,
-                                ),
-                                child: const CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
+                              ? const CircularProgressIndicator(
+                                color: Colors.white,
                               )
-                              : Text(
-                                'Reset Password',
+                              : const Text(
+                                'Set New Password',
                                 style: TextStyle(
-                                  fontSize:
-                                      ResponsiveUtils.getResponsiveFontSize(
-                                        context,
-                                        20,
-                                      ),
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
