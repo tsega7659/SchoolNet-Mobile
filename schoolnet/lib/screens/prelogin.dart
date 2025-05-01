@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:schoolnet/utils/responsive_utils.dart';
 
 class PreloginScreen extends StatelessWidget {
   const PreloginScreen({super.key});
@@ -8,30 +9,41 @@ class PreloginScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: EdgeInsets.symmetric(
+          horizontal: ResponsiveUtils.getResponsivePadding(context, 24),
+          vertical: ResponsiveUtils.getResponsiveHeight(context, 16),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Title and Description
             Column(
-              children: const [
+              children: [
                 Text(
                   'Which one are you?',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Color(0xFF4A2C2A),
-                    fontSize: 32,
+                    color: const Color(0xFF4A2C2A),
+                    fontSize: ResponsiveUtils.getResponsiveFontSize(
+                      context,
+                      32,
+                    ),
                     fontWeight: FontWeight.bold,
                     fontFamily: 'WorkSans',
                   ),
                 ),
-                SizedBox(height: 16),
+                SizedBox(
+                  height: ResponsiveUtils.getResponsiveHeight(context, 16),
+                ),
                 Text(
                   'Are you looking to find a school for your child or are you a school looking to connect with parents',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Color(0xFF4A2C2A),
-                    fontSize: 20,
+                    color: const Color(0xFF4A2C2A),
+                    fontSize: ResponsiveUtils.getResponsiveFontSize(
+                      context,
+                      20,
+                    ),
                     height: 1.5,
                     fontFamily: 'WorkSans',
                     fontWeight: FontWeight.normal,
@@ -39,7 +51,7 @@ class PreloginScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 100),
+            SizedBox(height: ResponsiveUtils.getResponsiveHeight(context, 100)),
             // Icons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -47,31 +59,37 @@ class PreloginScreen extends StatelessWidget {
                 // Parent Icon
                 GestureDetector(
                   onTap: () {
-                    Navigator.of(
-                      context,
-                    ).pushNamed('/login'); 
+                    Navigator.of(context).pushNamed('/login');
                   },
                   child: Column(
                     children: [
                       Container(
-                        height: 80,
-                        width: 80,
+                        height: ResponsiveUtils.getResponsiveHeight(
+                          context,
+                          80,
+                        ),
+                        width: ResponsiveUtils.getResponsiveWidth(context, 80),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF5F0FF),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.person,
-                          size: 40,
+                          size: ResponsiveUtils.getResponsiveWidth(context, 40),
                           color: Colors.purple[300],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
+                      SizedBox(
+                        height: ResponsiveUtils.getResponsiveHeight(context, 8),
+                      ),
+                      Text(
                         'Parent',
                         style: TextStyle(
-                          color: Color(0xFF4A2C2A),
-                          fontSize: 20,
+                          color: const Color(0xFF4A2C2A),
+                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                            context,
+                            20,
+                          ),
                         ),
                       ),
                     ],
@@ -85,46 +103,69 @@ class PreloginScreen extends StatelessWidget {
                       builder: (BuildContext context) {
                         return AlertDialog(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(
+                              ResponsiveUtils.getResponsiveWidth(context, 16),
+                            ),
                           ),
-                          title: const Text(
+                          title: Text(
                             'Notice',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 20,
+                              fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                context,
+                                20,
+                              ),
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF4A2C2A),
+                              color: const Color(0xFF4A2C2A),
                             ),
                           ),
-                          content: const Text(
+                          content: Text(
                             'For a better experience, please use our website.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF4A2C2A),
+                              fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                context,
+                                16,
+                              ),
+                              color: const Color(0xFF4A2C2A),
                             ),
                           ),
                           actions: [
                             Center(
                               child: TextButton(
                                 onPressed: () {
-                                  Navigator.of(
-                                    context,
-                                  ).pop(); // Close the dialog
+                                  Navigator.of(context).pop();
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                    horizontal: 28,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical:
+                                        ResponsiveUtils.getResponsiveHeight(
+                                          context,
+                                          14,
+                                        ),
+                                    horizontal:
+                                        ResponsiveUtils.getResponsivePadding(
+                                          context,
+                                          28,
+                                        ),
                                   ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFB188E3),
-                                    borderRadius: BorderRadius.circular(24),
+                                    borderRadius: BorderRadius.circular(
+                                      ResponsiveUtils.getResponsiveWidth(
+                                        context,
+                                        24,
+                                      ),
+                                    ),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'OK',
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize:
+                                          ResponsiveUtils.getResponsiveFontSize(
+                                            context,
+                                            16,
+                                          ),
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
@@ -140,24 +181,32 @@ class PreloginScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       Container(
-                        height: 80,
-                        width: 80,
+                        height: ResponsiveUtils.getResponsiveHeight(
+                          context,
+                          80,
+                        ),
+                        width: ResponsiveUtils.getResponsiveWidth(context, 80),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF5F0FF),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.school,
-                          size: 40,
+                          size: ResponsiveUtils.getResponsiveWidth(context, 40),
                           color: Colors.purple[300],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
+                      SizedBox(
+                        height: ResponsiveUtils.getResponsiveHeight(context, 8),
+                      ),
+                      Text(
                         'School',
                         style: TextStyle(
-                          color: Color(0xFF4A2C2A),
-                          fontSize: 20,
+                          color: const Color(0xFF4A2C2A),
+                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                            context,
+                            20,
+                          ),
                         ),
                       ),
                     ],

@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:app_links/app_links.dart';
-import 'dart:async';
 import 'package:schoolnet/screens/login_screen.dart';
+import 'package:schoolnet/utils/responsive_utils.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -15,106 +11,28 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _passwordConfirmController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
-  StreamSubscription? _sub;
-  @override
-  void initState() {
-    super.initState();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    initAppLinks();
-  }
+  bool _isLoading = false;
+  String _selectedRole = 'Parent';
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     _passwordController.dispose();
-    _passwordConfirmController.dispose();
-    _sub?.cancel();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> initAppLinks() async {
-    final appLinks = AppLinks();
-    try {
-      // Handle initial link
-      final initialUri = await appLinks.getInitialLink();
-      if (initialUri != null && initialUri.path == '/verify') {
-        final token = initialUri.queryParameters['token'] ?? '';
-        await verifyEmail(token);
-      }
-    } catch (e) {
-      print('Error getting initial URI: $e');
+  String? _validateName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your name';
     }
-
-    // Listen for incoming links
-    _sub = appLinks.uriLinkStream.listen(
-      (uri) {
-        if (uri.path == '/verify') {
-          final token = uri.queryParameters['token'] ?? '';
-          verifyEmail(token);
-        }
-      },
-      onError: (err) {
-        print('Error in deep link stream: $err');
-      },
-    );
-  }
-
-  Future<void> verifyEmail(String token) async {
-    try {
-      final response = await http.get(
-        Uri.parse(
-          'https://schoolnet-be.onrender.com/api/v1/users/verify-email?token=$token',
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-        showDialog(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Success'),
-                content: const Text(
-                  'Email verified successfully! Please log in.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-        );
-      } else {
-        showDialog(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Error'),
-                content: const Text(
-                  'Failed to verify email. Please try again.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-        );
-      }
-    } catch (e) {
-      print('Error verifying email: $e');
-    }
+    return null;
   }
 
   String? _validateEmail(String? value) {
@@ -123,16 +41,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
       return 'Please enter a valid email';
-    }
-    return null;
-  }
-
-  String? _validatePhone(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter your phone number';
-    }
-    if (!RegExp(r'^[0-9]{10,}$').hasMatch(value)) {
-      return 'Please enter a valid phone number';
     }
     return null;
   }
@@ -147,7 +55,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return null;
   }
 
-  String? _validatePasswordConfirm(String? value) {
+  String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please confirm your password';
     }
@@ -163,88 +71,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
   }
 
-  Future<void> _handleSignUp() async {
+  void _handleSignUp() {
     if (_formKey.currentState!.validate()) {
-      try {
-        final response = await http.post(
-          Uri.parse('https://schoolnet-be.onrender.com/api/v1/users/signup'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'phoneNumber': _phoneController.text,
-            'email': _emailController.text,
-            'password': _passwordController.text,
-            'passwordConfirm': _passwordConfirmController.text,
-          }),
-        );
+      setState(() {
+        _isLoading = true;
+      });
 
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          // Show beautiful popup
-          showDialog(
-            context: context,
-            builder:
-                (context) => AlertDialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  backgroundColor: Colors.white,
-                  title: const Text(
-                    'Verification Sent',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A2C2A),
-                    ),
-                  ),
-                  content: const Text(
-                    'A verification link has been sent to your email. Please verify to continue.',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'OK',
-                        style: TextStyle(
-                          color: Color(0xFFB188E3),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-          );
-        } else {
-          final error = jsonDecode(response.body)['message'] ?? 'Signup failed';
-          showDialog(
-            context: context,
-            builder:
-                (context) => AlertDialog(
-                  title: const Text('Error'),
-                  content: Text(error),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('OK'),
-                    ),
-                  ],
-                ),
-          );
-        }
-      } catch (e) {
-        showDialog(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Error'),
-                content: const Text('An error occurred. Please try again.'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
+      // Simulate API call delay
+      Future.delayed(const Duration(seconds: 2), () {
+        setState(() {
+          _isLoading = false;
+        });
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
-      }
+      });
     }
   }
 
@@ -253,227 +95,329 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  margin: EdgeInsets.only(bottom: 20),
-                  width: double.infinity,
-                  height: 350,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFB188E3),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(800),
-                      bottomRight: Radius.circular(800),
-                    ),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Positioned(
-                        top: 65,
-                        child: Text(
-                          'Sign-Up',
-                          style: TextStyle(
-                            fontFamily: "WorkSans",
-                            fontSize: 60,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF4A2C2A),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: -55,
-                        child: SizedBox(
-                          width: 300,
-                          height: 300,
-                          child: Center(
-                            child: Image.asset(
-                              'assets/images/signup_image.png',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                margin: EdgeInsets.only(
+                  bottom: ResponsiveUtils.getResponsiveHeight(context, 20),
+                ),
+                width: double.infinity,
+                height: ResponsiveUtils.getResponsiveHeight(context, 350),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFB188E3),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(800),
+                    bottomRight: Radius.circular(800),
                   ),
                 ),
-                const SizedBox(height: 30),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
-                  child: TextFormField(
-                    controller: _emailController,
-                    validator: _validateEmail,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.email_outlined,
-                        color: Colors.grey,
-                      ),
-                      hintText: 'email@gmail.com',
-                      labelText: 'Email',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(50),
-                        borderSide: const BorderSide(color: Colors.grey),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
-                  child: TextFormField(
-                    controller: _phoneController,
-                    validator: _validatePhone,
-                    keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.phone_android_outlined,
-                        color: Colors.grey,
-                      ),
-                      hintText: 'Enter your phone no',
-                      labelText: 'Phone No',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(50),
-                        borderSide: const BorderSide(color: Colors.grey),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
-                  child: TextFormField(
-                    controller: _passwordController,
-                    validator: _validatePassword,
-                    obscureText: !_isPasswordVisible,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.lock_outlined,
-                        color: Colors.grey,
-                      ),
-                      hintText: 'Enter your password',
-                      labelText: 'Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(50),
-                        borderSide: const BorderSide(color: Colors.grey),
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: Colors.grey,
-                        ),
-                        onPressed: _togglePasswordVisibility,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
-                  child: TextFormField(
-                    controller: _passwordConfirmController,
-                    validator: _validatePasswordConfirm,
-                    obscureText: !_isPasswordVisible,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.lock_outlined,
-                        color: Colors.grey,
-                      ),
-                      hintText: 'Confirm your password',
-                      labelText: 'Confirm Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(50),
-                        borderSide: const BorderSide(color: Colors.grey),
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: Colors.grey,
-                        ),
-                        onPressed: _togglePasswordVisibility,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 60),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
-                  child: Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF4A2C2A), Color(0xFFB188E3)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _handleSignUp,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                      ),
-                      child: const Text(
-                        'Create Account',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  '- or -',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    const Text(
-                      "Already have an account?",
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
-                          ),
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFFB188E3),
-                      ),
-                      child: const Text(
-                        "Login",
+                    Positioned(
+                      top: ResponsiveUtils.getResponsiveHeight(context, 65),
+                      child: Text(
+                        'Sign Up',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontFamily: "WorkSans",
+                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                            context,
+                            60,
+                          ),
                           fontWeight: FontWeight.bold,
+                          color: Color(0xFF4A2C2A),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: ResponsiveUtils.getResponsiveHeight(context, -10),
+                      child: SizedBox(
+                        width: ResponsiveUtils.getResponsiveWidth(context, 300),
+                        height: ResponsiveUtils.getResponsiveHeight(
+                          context,
+                          300,
+                        ),
+                        child: Center(
+                          child: Image.asset(
+                            'assets/images/signup_image.png',
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+              SizedBox(
+                height: ResponsiveUtils.getResponsiveHeight(context, 20),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: ResponsiveUtils.getResponsivePadding(context, 30),
+                ),
+                child: TextFormField(
+                  controller: _nameController,
+                  validator: _validateName,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.person_outline,
+                      color: Colors.grey,
+                    ),
+                    hintText: 'Enter your name',
+                    labelText: 'Name',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        ResponsiveUtils.getResponsiveWidth(context, 50),
+                      ),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: ResponsiveUtils.getResponsiveHeight(context, 20),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: ResponsiveUtils.getResponsivePadding(context, 30),
+                ),
+                child: TextFormField(
+                  controller: _emailController,
+                  validator: _validateEmail,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: Colors.grey,
+                    ),
+                    hintText: 'email@gmail.com',
+                    labelText: 'Email',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        ResponsiveUtils.getResponsiveWidth(context, 50),
+                      ),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: ResponsiveUtils.getResponsiveHeight(context, 20),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: ResponsiveUtils.getResponsivePadding(context, 30),
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: _selectedRole,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.people_outline,
+                      color: Colors.grey,
+                    ),
+                    labelText: 'Role',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        ResponsiveUtils.getResponsiveWidth(context, 50),
+                      ),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                  ),
+                  items:
+                      ['Parent', 'School', 'Teacher', 'Student']
+                          .map(
+                            (role) => DropdownMenuItem(
+                              value: role,
+                              child: Text(role),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedRole = value!;
+                    });
+                  },
+                ),
+              ),
+              SizedBox(
+                height: ResponsiveUtils.getResponsiveHeight(context, 20),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: ResponsiveUtils.getResponsivePadding(context, 30),
+                ),
+                child: TextFormField(
+                  controller: _passwordController,
+                  validator: _validatePassword,
+                  obscureText: !_isPasswordVisible,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.lock_outlined,
+                      color: Colors.grey,
+                    ),
+                    hintText: 'Enter your password',
+                    labelText: 'Password',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        ResponsiveUtils.getResponsiveWidth(context, 50),
+                      ),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: Colors.grey,
+                      ),
+                      onPressed: _togglePasswordVisibility,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: ResponsiveUtils.getResponsiveHeight(context, 20),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: ResponsiveUtils.getResponsivePadding(context, 30),
+                ),
+                child: TextFormField(
+                  controller: _confirmPasswordController,
+                  validator: _validateConfirmPassword,
+                  obscureText: !_isPasswordVisible,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.lock_outlined,
+                      color: Colors.grey,
+                    ),
+                    hintText: 'Confirm your password',
+                    labelText: 'Confirm Password',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        ResponsiveUtils.getResponsiveWidth(context, 50),
+                      ),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: Colors.grey,
+                      ),
+                      onPressed: _togglePasswordVisibility,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: ResponsiveUtils.getResponsiveHeight(context, 40),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: ResponsiveUtils.getResponsivePadding(context, 30),
+                ),
+                child: Container(
+                  width: double.infinity,
+                  height: ResponsiveUtils.getResponsiveHeight(context, 50),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF4A2C2A), Color(0xFFB188E3)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(
+                      ResponsiveUtils.getResponsiveWidth(context, 25),
+                    ),
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleSignUp,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          ResponsiveUtils.getResponsiveWidth(context, 25),
+                        ),
+                      ),
+                    ),
+                    child:
+                        _isLoading
+                            ? SizedBox(
+                              width: ResponsiveUtils.getResponsiveWidth(
+                                context,
+                                20,
+                              ),
+                              height: ResponsiveUtils.getResponsiveHeight(
+                                context,
+                                20,
+                              ),
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                            : Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                  context,
+                                  20,
+                                ),
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: ResponsiveUtils.getResponsiveHeight(context, 20),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Already have an account?",
+                    style: TextStyle(
+                      fontSize: ResponsiveUtils.getResponsiveFontSize(
+                        context,
+                        16,
+                      ),
+                      color: Colors.grey,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFB188E3),
+                    ),
+                    child: Text(
+                      "Login",
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          20,
+                        ),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: ResponsiveUtils.getResponsiveHeight(context, 20),
+              ),
+            ],
           ),
         ),
       ),

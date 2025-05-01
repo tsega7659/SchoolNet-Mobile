@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'filtered_schools_screen.dart';
+import 'package:schoolnet/screens/filtered_schools_screen.dart';
+import 'package:schoolnet/utils/responsive_utils.dart';
 
 class SchoolFilterScreen extends StatefulWidget {
   const SchoolFilterScreen({Key? key}) : super(key: key);
@@ -79,9 +80,14 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
   void _nextPage() {
     if (!_canMoveNext()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one option to continue'),
-          backgroundColor: Color(0xFF4A2C2A),
+        SnackBar(
+          content: Text(
+            'Please select at least one option to continue',
+            style: TextStyle(
+              fontSize: ResponsiveUtils.getResponsiveFontSize(context, 16),
+            ),
+          ),
+          backgroundColor: const Color(0xFF4A2C2A),
         ),
       );
       return;
@@ -104,9 +110,14 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
 
       if (unansweredQuestions.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please answer all questions to continue'),
-            backgroundColor: Color(0xFF4A2C2A),
+          SnackBar(
+            content: Text(
+              'Please answer all questions to continue',
+              style: TextStyle(
+                fontSize: ResponsiveUtils.getResponsiveFontSize(context, 16),
+              ),
+            ),
+            backgroundColor: const Color(0xFF4A2C2A),
           ),
         );
         return;
@@ -166,10 +177,18 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 16),
+                  padding: EdgeInsets.only(
+                    top: ResponsiveUtils.getResponsiveHeight(context, 16),
+                  ),
                   child: Text(
                     '${_currentPage + 1} of ${questions.length}',
-                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: ResponsiveUtils.getResponsiveFontSize(
+                        context,
+                        16,
+                      ),
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
                 Expanded(
@@ -184,21 +203,31 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
                     itemBuilder: (context, index) {
                       final question = questions[index];
                       return Padding(
-                        padding: const EdgeInsets.all(24),
+                        padding: EdgeInsets.all(
+                          ResponsiveUtils.getResponsivePadding(context, 24),
+                        ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
                               question['question'],
-                              style: const TextStyle(
-                                fontSize: 24,
+                              style: TextStyle(
+                                fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                  context,
+                                  24,
+                                ),
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFFB188E3),
+                                color: const Color(0xFFB188E3),
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 48),
+                            SizedBox(
+                              height: ResponsiveUtils.getResponsiveHeight(
+                                context,
+                                48,
+                              ),
+                            ),
                             if (question['type'] == 'search')
                               Column(
                                 children: [
@@ -207,7 +236,12 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
                                       border: Border.all(
                                         color: const Color(0xFFB188E3),
                                       ),
-                                      borderRadius: BorderRadius.circular(25),
+                                      borderRadius: BorderRadius.circular(
+                                        ResponsiveUtils.getResponsiveWidth(
+                                          context,
+                                          25,
+                                        ),
+                                      ),
                                     ),
                                     child: TextField(
                                       controller: _locationController,
@@ -215,6 +249,11 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
                                         hintText: 'Search',
                                         hintStyle: TextStyle(
                                           color: Colors.grey[600],
+                                          fontSize:
+                                              ResponsiveUtils.getResponsiveFontSize(
+                                                context,
+                                                16,
+                                              ),
                                         ),
                                         prefixIcon: const Icon(
                                           Icons.search,
@@ -225,11 +264,18 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
                                           color: Color(0xFFB188E3),
                                         ),
                                         border: InputBorder.none,
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              vertical: 15,
-                                              horizontal: 20,
-                                            ),
+                                        contentPadding: EdgeInsets.symmetric(
+                                          vertical:
+                                              ResponsiveUtils.getResponsiveHeight(
+                                                context,
+                                                15,
+                                              ),
+                                          horizontal:
+                                              ResponsiveUtils.getResponsivePadding(
+                                                context,
+                                                20,
+                                              ),
+                                        ),
                                       ),
                                       onChanged: (value) {
                                         setState(() {
@@ -244,135 +290,154 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
                                       },
                                     ),
                                   ),
-                                  const SizedBox(height: 48),
+                                  SizedBox(
+                                    height: ResponsiveUtils.getResponsiveHeight(
+                                      context,
+                                      48,
+                                    ),
+                                  ),
                                   // Placeholder for the illustration
                                   Container(
-                                    height: 300,
-                                    width: 300,
-                                    alignment: Alignment.center,
-                                    child: Image.asset(
-                                      'assets/images/select_location_image.png',
-                                      fit: BoxFit.cover,
-                                      width: 200,
-                                      height: 200,
+                                    height: ResponsiveUtils.getResponsiveHeight(
+                                      context,
+                                      300,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(
+                                        ResponsiveUtils.getResponsiveWidth(
+                                          context,
+                                          20,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.location_on,
+                                        size:
+                                            ResponsiveUtils.getResponsiveWidth(
+                                              context,
+                                              50,
+                                            ),
+                                        color: Colors.grey[400],
+                                      ),
                                     ),
                                   ),
                                 ],
                               )
                             else if (question['type'] == 'dropdown')
-                              Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: const Color(0xFFB188E3),
+                              DropdownButtonFormField<String>(
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      ResponsiveUtils.getResponsiveWidth(
+                                        context,
+                                        25,
+                                      ),
+                                    ),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFB188E3),
+                                    ),
                                   ),
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                child: DropdownButton<String>(
-                                  value:
-                                      filterAnswers[question['key']]!.isEmpty
-                                          ? null
-                                          : filterAnswers[question['key']]![0],
-                                  isExpanded: true,
-                                  underline: const SizedBox(),
-                                  hint: Text(
-                                    'Select ${question['question']}',
-                                    style: TextStyle(color: Colors.grey[600]),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal:
+                                        ResponsiveUtils.getResponsivePadding(
+                                          context,
+                                          20,
+                                        ),
+                                    vertical:
+                                        ResponsiveUtils.getResponsiveHeight(
+                                          context,
+                                          15,
+                                        ),
                                   ),
-                                  items:
-                                      (question['options'] as List<String>).map(
-                                        (String value) {
-                                          return DropdownMenuItem<String>(
+                                ),
+                                items:
+                                    question['options']
+                                        .map<DropdownMenuItem<String>>(
+                                          (
+                                            String value,
+                                          ) => DropdownMenuItem<String>(
                                             value: value,
                                             child: Text(
                                               value,
-                                              style: const TextStyle(
-                                                fontSize: 20,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ).toList(),
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      if (newValue != null) {
-                                        filterAnswers[question['key']] = [
-                                          newValue,
-                                        ];
-                                      }
-                                    });
-                                  },
-                                ),
-                              )
-                            else
-                              Column(
-                                children:
-                                    (question['options'] as List<String>)
-                                        .map(
-                                          (option) => Padding(
-                                            padding: const EdgeInsets.only(
-                                              bottom: 16,
-                                            ),
-                                            child: SizedBox(
-                                              width: double.infinity,
-                                              child: ElevatedButton(
-                                                onPressed: () {
-                                                  setState(() {
-                                                    // Toggle selection
-                                                    if (filterAnswers[question['key']]!
-                                                        .contains(option)) {
-                                                      filterAnswers[question['key']]!
-                                                          .remove(option);
-                                                    } else {
-                                                      filterAnswers[question['key']]!
-                                                          .add(option);
-                                                    }
-                                                  });
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor:
-                                                      filterAnswers[question['key']]!
-                                                              .contains(option)
-                                                          ? const Color(
-                                                            0xFFB188E3,
-                                                          )
-                                                          : Colors.white,
-                                                  side: const BorderSide(
-                                                    color: Color(0xFFB188E3),
-                                                  ),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          25,
-                                                        ),
-                                                  ),
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        vertical: 12,
-                                                      ),
-                                                ),
-                                                child: Text(
-                                                  option,
-                                                  style: TextStyle(
-                                                    fontSize: 20,
-                                                    color:
-                                                        filterAnswers[question['key']]!
-                                                                .contains(
-                                                                  option,
-                                                                )
-                                                            ? Colors.white
-                                                            : Colors.black,
-                                                  ),
-                                                ),
+                                              style: TextStyle(
+                                                fontSize:
+                                                    ResponsiveUtils.getResponsiveFontSize(
+                                                      context,
+                                                      16,
+                                                    ),
                                               ),
                                             ),
                                           ),
                                         )
                                         .toList(),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    if (newValue != null) {
+                                      filterAnswers[question['key']] = [
+                                        newValue,
+                                      ];
+                                    }
+                                  });
+                                },
+                              )
+                            else
+                              Wrap(
+                                spacing: ResponsiveUtils.getResponsiveWidth(
+                                  context,
+                                  10,
+                                ),
+                                runSpacing: ResponsiveUtils.getResponsiveHeight(
+                                  context,
+                                  10,
+                                ),
+                                children:
+                                    question['options'].map<Widget>((option) {
+                                      final isSelected =
+                                          filterAnswers[question['key']]!
+                                              .contains(option);
+                                      return FilterChip(
+                                        label: Text(
+                                          option,
+                                          style: TextStyle(
+                                            fontSize:
+                                                ResponsiveUtils.getResponsiveFontSize(
+                                                  context,
+                                                  16,
+                                                ),
+                                            color:
+                                                isSelected
+                                                    ? Colors.white
+                                                    : const Color(0xFFB188E3),
+                                          ),
+                                        ),
+                                        selected: isSelected,
+                                        backgroundColor: Colors.white,
+                                        selectedColor: const Color(0xFFB188E3),
+                                        checkmarkColor: Colors.white,
+                                        side: BorderSide(
+                                          color: const Color(0xFFB188E3),
+                                          width:
+                                              ResponsiveUtils.getResponsiveWidth(
+                                                context,
+                                                1,
+                                              ),
+                                        ),
+                                        onSelected: (bool selected) {
+                                          setState(() {
+                                            if (selected) {
+                                              filterAnswers[question['key']]!
+                                                  .add(option);
+                                            } else {
+                                              filterAnswers[question['key']]!
+                                                  .remove(option);
+                                            }
+                                          });
+                                        },
+                                      );
+                                    }).toList(),
                               ),
-                            const SizedBox(height: 50),
                           ],
                         ),
                       );
@@ -382,95 +447,84 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
               ],
             ),
             Positioned(
-              top: 28,
-              left: 20,
-              child:
-                  _currentPage > 0
-                      ? IconButton(
-                        onPressed: _previousPage,
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Color(0xFFB188E3),
-                          size: 30,
+              bottom: ResponsiveUtils.getResponsiveHeight(context, 20),
+              left: ResponsiveUtils.getResponsivePadding(context, 24),
+              right: ResponsiveUtils.getResponsivePadding(context, 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (_currentPage > 0)
+                    TextButton(
+                      onPressed: _previousPage,
+                      child: Text(
+                        'Previous',
+                        style: TextStyle(
+                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                            context,
+                            16,
+                          ),
+                          color: const Color(0xFFB188E3),
                         ),
-                      )
-                      : const SizedBox.shrink(),
-            ),
-            Positioned(
-              top: 28,
-              right: 20,
-              child: TextButton(
-                onPressed: _skipToHome,
-                child: const Text(
-                  'Skip',
-                  style: TextStyle(fontSize: 20, color: Color(0xFFB188E3)),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 200,
-              left: 0,
-              right: 0,
-              child: Container(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        _pages.length,
-                        (index) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          height: 8,
-                          width: _currentPage == index ? 24 : 8,
-                          decoration: BoxDecoration(
-                            color:
-                                _currentPage == index
-                                    ? const Color(0xFFB188E3)
-                                    : const Color(0xFF4A2C2A).withOpacity(0.4),
-                            borderRadius: BorderRadius.circular(4),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 0),
+                  if (_currentPage < questions.length - 1)
+                    TextButton(
+                      onPressed: _skipToHome,
+                      child: Text(
+                        'Skip',
+                        style: TextStyle(
+                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                            context,
+                            16,
+                          ),
+                          color: const Color(0xFFB188E3),
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 0),
+                  Container(
+                    height: ResponsiveUtils.getResponsiveHeight(context, 50),
+                    width: ResponsiveUtils.getResponsiveWidth(context, 120),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF4A2C2A), Color(0xFFB188E3)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(
+                        ResponsiveUtils.getResponsiveWidth(context, 25),
+                      ),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _nextPage,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            ResponsiveUtils.getResponsiveWidth(context, 25),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 50,
-              right: 20,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFB188E3),
-                      Color.fromARGB(255, 74, 42, 69),
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: ElevatedButton(
-                  onPressed: _nextPage,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+                      child: Text(
+                        _currentPage == questions.length - 1
+                            ? 'Finish'
+                            : 'Next',
+                        style: TextStyle(
+                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                            context,
+                            18,
+                          ),
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
-                  child: const Text(
-                    'Next',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                ),
+                ],
               ),
             ),
           ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:schoolnet/routes/app_route..dart';
+import 'package:schoolnet/utils/responsive_utils.dart';
 import 'login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -81,7 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             },
           ),
           Positioned(
-            bottom: 250,
+            bottom: ResponsiveUtils.getResponsiveHeight(context, 250),
             left: 0,
             right: 0,
             child: Container(
@@ -94,15 +95,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       _pages.length,
                       (index) => AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        height: 8,
-                        width: _currentPage == index ? 24 : 8,
+                        margin: EdgeInsets.symmetric(
+                          horizontal: ResponsiveUtils.getResponsivePadding(
+                            context,
+                            4,
+                          ),
+                        ),
+                        height: ResponsiveUtils.getResponsiveHeight(context, 8),
+                        width:
+                            _currentPage == index
+                                ? ResponsiveUtils.getResponsiveWidth(
+                                  context,
+                                  24,
+                                )
+                                : ResponsiveUtils.getResponsiveWidth(
+                                  context,
+                                  8,
+                                ),
                         decoration: BoxDecoration(
                           color:
                               _currentPage == index
                                   ? const Color(0xFFB188E3)
                                   : const Color(0xFF4A2C2A).withOpacity(0.4),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(
+                            ResponsiveUtils.getResponsiveWidth(context, 4),
+                          ),
                         ),
                       ),
                     ),
@@ -146,12 +163,17 @@ class OnboardingPageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveUtils.getResponsivePadding(context, 24),
+        vertical: ResponsiveUtils.getResponsiveHeight(context, 16),
+      ),
       color: const Color(0xFFF5F0FF),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 30),
+            padding: EdgeInsets.only(
+              top: ResponsiveUtils.getResponsiveHeight(context, 30),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -163,12 +185,15 @@ class OnboardingPageWidget extends StatelessWidget {
                       ),
                     );
                   },
-                  child: const Text(
+                  child: Text(
                     'Skip',
                     style: TextStyle(
                       fontFamily: 'WorkSans',
-                      color: Color(0xFFB188E3),
-                      fontSize: 24,
+                      color: const Color(0xFFB188E3),
+                      fontSize: ResponsiveUtils.getResponsiveFontSize(
+                        context,
+                        24,
+                      ),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -176,45 +201,45 @@ class OnboardingPageWidget extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+          SizedBox(height: ResponsiveUtils.getResponsiveHeight(context, 40)),
           // Illustration
           SvgPicture.asset(
             page.illustration,
-            height: MediaQuery.of(context).size.height * 0.35,
+            height: ResponsiveUtils.getResponsiveHeight(context, 250),
             fit: BoxFit.contain,
           ),
-          const SizedBox(height: 50),
+          SizedBox(height: ResponsiveUtils.getResponsiveHeight(context, 50)),
           // Title
           Text(
             page.title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF4A2C2A),
-              fontSize: 24,
+            style: TextStyle(
+              color: const Color(0xFF4A2C2A),
+              fontSize: ResponsiveUtils.getResponsiveFontSize(context, 24),
               fontWeight: FontWeight.bold,
               fontFamily: 'WorkSans',
             ),
           ),
-          const SizedBox(height: 30),
+          SizedBox(height: ResponsiveUtils.getResponsiveHeight(context, 30)),
           // Description
           Text(
             page.description,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: const Color(0xFF4A2C2A).withOpacity(0.8),
-              fontSize: 16,
+              fontSize: ResponsiveUtils.getResponsiveFontSize(context, 16),
               height: 1.5,
               fontFamily: 'WorkSans',
             ),
           ),
-          const SizedBox(height: 150),
+          SizedBox(height: ResponsiveUtils.getResponsiveHeight(context, 150)),
           // Next Button
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                height: 56,
+                height: ResponsiveUtils.getResponsiveHeight(context, 56),
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
@@ -225,21 +250,28 @@ class OnboardingPageWidget extends StatelessWidget {
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(
+                      ResponsiveUtils.getResponsiveWidth(context, 10),
+                    ),
                   ),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(
+                          ResponsiveUtils.getResponsiveWidth(context, 10),
+                        ),
                       ),
                     ),
                     onPressed: onNext,
                     child: Text(
                       isLastPage ? 'Get Started' : 'Next',
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(
+                          context,
+                          18,
+                        ),
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),

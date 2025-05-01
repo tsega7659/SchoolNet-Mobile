@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:schoolnet/routes/app_route..dart';
+import 'package:schoolnet/utils/responsive_utils.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -25,8 +26,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Size screenSize = MediaQuery.of(context).size;
-
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -38,8 +37,8 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
         child: Center(
           child: SizedBox(
-            width: screenSize.width * 0.80,
-            height: screenSize.height * 0.3,
+            width: ResponsiveUtils.getResponsiveWidth(context, 300),
+            height: ResponsiveUtils.getResponsiveHeight(context, 300),
             child: SvgPicture.asset(
               'assets/images/schoolnet1logo.svg',
               fit: BoxFit.contain,

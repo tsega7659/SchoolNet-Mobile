@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'school_filter_screen.dart';
+import 'package:schoolnet/screens/school_filter_screen.dart';
+import 'package:schoolnet/utils/responsive_utils.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -9,18 +10,28 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0FF),
       appBar: AppBar(
-        title: const Text('SchoolNet', style: TextStyle(color: Color(0xFF4A2C2A))), 
+        title: Text(
+          'SchoolNet',
+          style: TextStyle(
+            color: const Color(0xFF4A2C2A),
+            fontSize: ResponsiveUtils.getResponsiveFontSize(context, 20),
+          ),
+        ),
       ),
       body: Center(
         child: Container(
           width: double.infinity,
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          height: 56,
+          margin: EdgeInsets.symmetric(
+            horizontal: ResponsiveUtils.getResponsivePadding(context, 24),
+          ),
+          height: ResponsiveUtils.getResponsiveHeight(context, 56),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [Color(0xFF4A2C2A), Color(0xFFB188E3)],
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(
+              ResponsiveUtils.getResponsiveWidth(context, 16),
+            ),
           ),
           child: ElevatedButton(
             onPressed: () {
@@ -36,13 +47,15 @@ class HomeScreen extends StatelessWidget {
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(
+                  ResponsiveUtils.getResponsiveWidth(context, 16),
+                ),
               ),
             ),
-            child: const Text(
+            child: Text(
               'Explore Schools',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: ResponsiveUtils.getResponsiveFontSize(context, 18),
                 fontWeight: FontWeight.w600,
                 fontFamily: 'WorkSans',
               ),
