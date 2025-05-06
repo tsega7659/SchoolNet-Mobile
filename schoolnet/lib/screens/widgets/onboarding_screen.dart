@@ -157,11 +157,7 @@ class OnboardingPageWidget extends StatelessWidget {
               children: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
-                    );
+                    Navigator.pushNamed(context, '/userstatus');
                   },
                   child: const Text(
                     'Skip',

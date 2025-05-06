@@ -6,6 +6,7 @@ import 'package:schoolnet/screens/school/fees.dart';
 import 'package:schoolnet/screens/school/home_screen.dart';
 import 'package:schoolnet/screens/school/school_detail.dart';
 import 'package:schoolnet/screens/school/staff.dart';
+import 'package:schoolnet/screens/school/staff_detail.dart';
 import 'package:schoolnet/screens/widgets/onboarding_screen.dart' as onboarding;
 import 'package:schoolnet/screens/auth/reset_password_screen.dart';
 import 'package:schoolnet/screens/school/school_filter_screen.dart';
@@ -32,6 +33,7 @@ class AppRoutes {
   static const String admissions = '/admissions';
   static const String fees = '/fees';
   static const String staffs = '/staffs';
+  static const String staffDetails = '/staffDetails';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -74,6 +76,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const FeesScreen());
       case staffs:
         return MaterialPageRoute(builder: (_) => StaffScreen());
+      case staffDetails:
+        return MaterialPageRoute(builder: (_) => const StaffDetail());
       default:
         return MaterialPageRoute(
           builder:

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:schoolnet/screens/widgets/bottom_navbar.dart';
 
 class AddmissionsScreen extends StatefulWidget {
   const AddmissionsScreen({super.key});
@@ -8,6 +9,28 @@ class AddmissionsScreen extends StatefulWidget {
 }
 
 class _AddmissionsScreenState extends State<AddmissionsScreen> {
+  int _currentIndex = 0;
+
+  void _onNavBarTap(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+    switch (index) {
+      case 0:
+        Navigator.pushNamed(context, '/home');
+        break;
+      case 1:
+        Navigator.pushNamed(context, '/favorites');
+        break;
+      case 2:
+        Navigator.pushNamed(context, '/chat');
+        break;
+      case 3:
+        Navigator.pushNamed(context, '/profile');
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,6 +85,10 @@ class _AddmissionsScreenState extends State<AddmissionsScreen> {
             _buildBulletedList(['Application Open Date: [Insert Date]']),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: _onNavBarTap,
       ),
     );
   }
