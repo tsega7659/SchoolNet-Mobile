@@ -75,6 +75,16 @@ flutter:
      - assets/images/connect_onboarding.svg
      - assets/images/forgot_password.png
      - assets/images/select_location_image.png
+     - assets/images/person_icon.png
+     - assets/images/school_icon.png
+     - assets/images/home_screen_image.png
+     - assets/images/primary_image.png
+     - assets/images/middleschool_inage.png
+     - assets/images/highschool_image.png
+     - assets/images/school1.jpg
+     - assets/images/school2.jpg
+     - assets/images/school3.jpg
+     - assets/images/review_image.jpg
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
