@@ -384,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         child: SizedBox(
-          width: 180,
+          width: 200,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
