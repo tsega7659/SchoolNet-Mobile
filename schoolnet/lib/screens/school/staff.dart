@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:schoolnet/screens/widgets/bottom_navbar.dart';
 import 'staff_detail.dart';
 
 class StaffScreen extends StatefulWidget {
@@ -38,6 +39,8 @@ class _StaffScreenState extends State<StaffScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
+
       backgroundColor: Colors.white,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,7 +224,11 @@ class _StaffScreenState extends State<StaffScreen> {
                 ),
                 child: const Text(
                   'Add To My List',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

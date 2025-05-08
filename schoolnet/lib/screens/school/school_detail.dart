@@ -12,29 +12,6 @@ class SchoolDetailPage extends StatefulWidget {
 }
 
 class _SchoolDetailPageState extends State<SchoolDetailPage> {
-  int _currentIndex = 0;
-
-  void _onNavBarTap(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-    // Add navigation logic here if needed
-    switch (index) {
-      case 0:
-        // Navigate to Home
-        Navigator.popUntil(context, ModalRoute.withName('/'));
-        break;
-      case 1:
-        // Navigate to Favorites
-        break;
-      case 2:
-        // Navigate to Chat
-        break;
-      case 3:
-        // Navigate to Profile
-        break;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,10 +39,7 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onNavBarTap,
-      ),
+     bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       body: SingleChildScrollView(
         child: Column(
           children: [

@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:schoolnet/screens/auth/login_screen.dart';
+import 'package:schoolnet/screens/profile/edit_profile.dart';
+import 'package:schoolnet/screens/profile/profile_screen.dart';
 import 'package:schoolnet/screens/school/acadamics.dart';
 import 'package:schoolnet/screens/school/admissions.dart';
 import 'package:schoolnet/screens/school/fees.dart';
+import 'package:schoolnet/screens/school/filter_screen.dart';
 import 'package:schoolnet/screens/school/home_screen.dart';
 import 'package:schoolnet/screens/school/school_detail.dart';
 import 'package:schoolnet/screens/school/staff.dart';
 import 'package:schoolnet/screens/school/staff_detail.dart';
 import 'package:schoolnet/screens/widgets/onboarding_screen.dart' as onboarding;
 import 'package:schoolnet/screens/auth/reset_password_screen.dart';
-import 'package:schoolnet/screens/school/school_filter_screen.dart';
+import 'package:schoolnet/screens/widgets/school_filter_screen.dart';
 import 'package:schoolnet/screens/widgets/selectuser_type.dart'
     as selectUserType;
 import 'package:schoolnet/screens/auth/signup_screen.dart';
@@ -34,6 +37,8 @@ class AppRoutes {
   static const String fees = '/fees';
   static const String staffs = '/staffs';
   static const String staffDetails = '/staffDetails';
+  static const String filtter = '/filters';
+  static const String edit_profile = '/edit_profile';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -47,8 +52,6 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (_) => const HomeScreen(filterAnswers: {}),
         );
-      // case profile:
-      //   return MaterialPageRoute(builder: (_) => const ProfileScreen());
       case onboardingScreen:
         return MaterialPageRoute(
           builder: (_) => const onboarding.OnboardingScreen(),
@@ -78,6 +81,13 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => StaffScreen());
       case staffDetails:
         return MaterialPageRoute(builder: (_) => const StaffDetail());
+      case filtter:
+        return MaterialPageRoute(builder: (_) => FiltersScreen());
+      case profile:
+        return MaterialPageRoute(builder: (_) => ProfileScreen());
+      case edit_profile:
+        return MaterialPageRoute(builder: (_) => const EditProfileScreen());
+
       default:
         return MaterialPageRoute(
           builder:

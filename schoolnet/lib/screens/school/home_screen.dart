@@ -11,39 +11,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-  // Track only one selected category
   String? _selectedCategory;
 
-  void _onNavBarTap(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-    // Add navigation logic here if needed
-    switch (index) {
-      case 0:
-        // Already on Home
-        break;
-      case 1:
-        // Navigate to Favorites
-        break;
-      case 2:
-        // Navigate to Chat
-        break;
-      case 3:
-        // Navigate to Profile
-        break;
-    }
-  }
+ 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onNavBarTap,
-      ),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
+
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -56,26 +33,64 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search',
-                          hintStyle: TextStyle(color: Colors.grey[600]),
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            color: Colors.grey,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 20,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            child: TextField(
+                              decoration: InputDecoration(
+                                hintText: 'Search',
+                                hintStyle: TextStyle(color: Colors.grey[600]),
+                                prefixIcon: const Icon(
+                                  Icons.search,
+                                  color: Colors.grey,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 15,
+                                  horizontal: 20,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 5),
+                        Row(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(50),
+                                color: Colors.white,
+                              ),
+                              child: IconButton(
+                                onPressed: () {
+                                  Navigator.pushNamed(context, '/filters');
+                                },
+                                icon: const Icon(Icons.filter_list),
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(50),
+                                color: Colors.white,
+                              ),
+                              child: IconButton(
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/notifications',
+                                  );
+                                },
+                                icon: const Icon(Icons.notifications),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -152,7 +167,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              // Popular Categories Section
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -204,7 +218,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              // Schools Near You Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
@@ -265,7 +278,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              // Schools by States Section
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -308,10 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () {
         setState(() {
-          // Single selection: Set the new category, deselecting the previous one
           _selectedCategory = _selectedCategory == title ? null : title;
         });
-        // Add backend filtration logic here later
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -366,7 +376,6 @@ class _HomeScreenState extends State<HomeScreen> {
   ) {
     return GestureDetector(
       onTap: () {
-        // Navigate to School Detail Page
         Navigator.pushNamed(
           context,
           '/schooldetailpage',
