@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:schoolnet/routes/app_route..dart';
-import '../auth/login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -58,6 +57,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  void _previousPage() {
+    if (_currentPage > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,41 +84,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               return OnboardingPageWidget(
                 page: _pages[index],
                 isLastPage: index == _pages.length - 1,
+                currentPage: _currentPage,
                 onNext: _nextPage,
+                onPrevious: _previousPage,
               );
             },
           ),
-          // Positioned(
-          //   bottom: 200,
-          //   left: 0,
-          //   right: 0,
-          //   child: Container(
-          //     child: Column(
-          //       mainAxisSize: MainAxisSize.min,
-          //       children: [
-          //         Row(
-          //           mainAxisAlignment: MainAxisAlignment.center,
-          //           children: List.generate(
-          //             _pages.length,
-          //             (index) => AnimatedContainer(
-          //               duration: const Duration(milliseconds: 300),
-          //               margin: const EdgeInsets.symmetric(horizontal: 4),
-          //               height: 8,
-          //               width: _currentPage == index ? 24 : 8,
-          //               decoration: BoxDecoration(
-          //                 color:
-          //                     _currentPage == index
-          //                         ? const Color(0xFFB188E3)
-          //                         : const Color(0xFF4A2C2A).withOpacity(0.4),
-          //                 borderRadius: BorderRadius.circular(4),
-          //               ),
-          //             ),
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ),
         ],
       ),
     );
@@ -134,13 +113,17 @@ class OnboardingPage {
 class OnboardingPageWidget extends StatelessWidget {
   final OnboardingPage page;
   final bool isLastPage;
+  final int currentPage;
   final VoidCallback onNext;
+  final VoidCallback onPrevious;
 
   const OnboardingPageWidget({
     Key? key,
     required this.page,
     required this.isLastPage,
+    required this.currentPage,
     required this.onNext,
+    required this.onPrevious,
   }) : super(key: key);
 
   @override
@@ -153,8 +136,23 @@ class OnboardingPageWidget extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 30),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                currentPage > 0
+                    ? TextButton(
+                        onPressed: onPrevious,
+                        child: const Text(
+                          'Back',
+                          style: TextStyle(
+                            fontFamily: 'WorkSans',
+                            color: Color(0xFFB188E3),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : const SizedBox(
+                        width: 0), // Hide back button on first page
                 TextButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/userstatus');
