@@ -1,45 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:schoolnet/screens/widgets/bottom_navbar.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:schoolnet/services/auth_service.dart';
 
 class SchoolDetailPage extends StatefulWidget {
   final Map<String, dynamic> schoolDetails;
 
   const SchoolDetailPage({Key? key, required this.schoolDetails})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<SchoolDetailPage> createState() => _SchoolDetailPageState();
 }
 
 class _SchoolDetailPageState extends State<SchoolDetailPage> {
+  bool _isSavingFavorite = false;
+
+  Future<void> _addToFavorites() async {
+    setState(() => _isSavingFavorite = true);
+    final authService = AuthService();
+    final token = authService.jwtToken;
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Authentication token not found')),
+      );
+      setState(() => _isSavingFavorite = false);
+      return;
+    }
+
+    try {
+      print('Adding school to favorites: ${widget.schoolDetails['_id']}');
+      final response = await http.patch(
+        Uri.parse('https://schoolnet-be.onrender.com/api/v1/parentProfiles/saveSchool'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+          'Cookie': 'jwt=$token',
+        },
+        body: jsonEncode({
+          'schoolId': widget.schoolDetails['_id'],
+        }),
+      );
+
+      print('Add to favorites response: ${response.statusCode}');
+      print('Add to favorites body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('School added to favorites!')),
+        );
+      } else if (response.statusCode == 404) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('No parent profile found. Please complete onboarding or profile setup.')),
+        );
+      } else {
+        final error = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add school: ${error['message'] ?? response.body}')),
+        );
+      }
+    } catch (e) {
+      print('Error adding to favorites: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() => _isSavingFavorite = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final schoolDetails = widget.schoolDetails;
-    final String name = schoolDetails['name'] ?? 'John F. Kennedy School';
-    final String location = schoolDetails['location'] ?? 'Bole, Addis Ababa';
-    final String type = schoolDetails['type'] ?? 'Private';
-    final String level = schoolDetails['level'] ?? 'K-12';
-    final String rating = schoolDetails['rating'] ?? '4.9';
-    final String reviews = schoolDetails['reviews'] ?? '150 reviews';
-    final String imagePath =
-        schoolDetails['imagePath'] ?? 'assets/images/school1.jpg';
-    // final String contact =
-    //     schoolDetails['contact'] ??
-    //     'Phone: +251-911-123-456\nEmail: info@jfkschool.edu';
-    final String admissions =
-        schoolDetails['admissions'] ?? 'Admissions and scholarships available';
-    final String fees = schoolDetails['fees'] ?? 'Fees and scholarships';
-    final String staff = schoolDetails['staff'] ?? 'Staff';
-    final String review =
-        schoolDetails['review'] ??
-        'Lorem ipsum dolor sit amet consectetur. Suspendisse cursus. First lorem dolor quam adipiscing.';
-    final String reviewer = schoolDetails['reviewer'] ?? 'John Smith';
-    final String reviewerRole = schoolDetails['reviewerRole'] ?? 'Parent';
+
+    // Extract address information
+    final address = schoolDetails['address'] is List &&
+            (schoolDetails['address'] as List).isNotEmpty
+        ? (schoolDetails['address'][0] as Map<String, dynamic>)
+        : {'city': 'Unknown', 'subCity': 'Unknown'};
+
+    final String name = schoolDetails['name'] ?? 'Unknown School';
+    final String location =
+        '${address['subCity'] ?? 'Unknown'}, ${address['city'] ?? 'Unknown'}';
+    final String type = schoolDetails['schoolType'] ?? 'Unknown';
+    final String level = schoolDetails['division']?.join(', ') ?? 'K-12';
+    final String rating = '4.0'; // You might want to add this to your API
+    final String reviews =
+        '0 reviews'; // You might want to add this to your API
+    final String imagePath = 'assets/images/school1.jpg'; // Default image
+    final String phoneNumber = schoolDetails['phoneNumber'] ?? 'Not available';
+    final String email = schoolDetails['email'] ?? 'Not available';
+    final String website = schoolDetails['schoolWebsite'] ?? 'Not available';
+    final String description =
+        schoolDetails['description'] ?? 'No description available';
+    final int studentCount = schoolDetails['studentCount'] ?? 0;
+    final int yearEstablished = schoolDetails['yearEstablished'] ?? 0;
+    final String schoolId = schoolDetails['_id'] ?? '';
 
     return Scaffold(
       backgroundColor: Colors.white,
-     bottomNavigationBar: const BottomNavBar(currentIndex: 0),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -50,12 +112,11 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                   height: 300,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder:
-                      (context, error, stackTrace) => Container(
-                        height: 250,
-                        color: Colors.grey[300],
-                        child: const Center(child: Text('Image Placeholder')),
-                      ),
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 250,
+                    color: Colors.grey[300],
+                    child: const Center(child: Text('Image Placeholder')),
+                  ),
                 ),
                 Positioned(
                   top: 50,
@@ -157,7 +218,7 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Mixed',
+                              '$studentCount Students',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.black,
@@ -204,34 +265,6 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                           color: const Color(0xFFE9E8FC),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.group,
-                              color: Colors.black,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              "500 Students",
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 18),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE9E8FC),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
                         child: Text(
                           type,
                           style: const TextStyle(
@@ -241,6 +274,24 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Description
+                  const Text(
+                    'About',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'WorkSans',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   // Contact Details
@@ -274,7 +325,7 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                           Icon(Icons.phone, color: Colors.grey, size: 18),
                           SizedBox(width: 4),
                           Text(
-                            "+251-911-123-456",
+                            phoneNumber,
                             style: const TextStyle(
                               fontSize: 18,
                               color: Colors.grey,
@@ -288,7 +339,7 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                           Icon(Icons.email, color: Colors.grey, size: 18),
                           SizedBox(width: 4),
                           Text(
-                            "school@school.com",
+                            email,
                             style: const TextStyle(
                               fontSize: 18,
                               color: Colors.grey,
@@ -302,7 +353,7 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                           Icon(Icons.language, color: Colors.grey, size: 18),
                           SizedBox(width: 4),
                           Text(
-                            "www.school.com",
+                            website,
                             style: const TextStyle(
                               fontSize: 18,
                               color: Colors.grey,
@@ -439,7 +490,7 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          reviewer,
+                          'John Smith',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -453,9 +504,8 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(6.0),
-
                             child: Text(
-                              reviewerRole,
+                              'Parent',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.black,
@@ -480,7 +530,9 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(review, style: const TextStyle(fontSize: 14)),
+                        Text(
+                            'Lorem ipsum dolor sit amet consectetur. Suspendisse cursus. First lorem dolor quam adipiscing.',
+                            style: const TextStyle(fontSize: 14)),
                       ],
                     ),
                   ),
@@ -489,28 +541,34 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                   Column(
                     children: [
                       ElevatedButton(
-                        onPressed: () {
-                          // Add "Add To My List" logic here
-                        },
+                        onPressed: _isSavingFavorite ? null : _addToFavorites,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF5A3B82),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              30,
-                            ), // Increased roundness
+                            borderRadius: BorderRadius.circular(30),
                           ),
                           padding: const EdgeInsets.symmetric(
-                            vertical: 16, // Adjusted padding for better height
+                            vertical: 16,
                           ),
                           minimumSize: const Size(
                             double.infinity,
                             50,
-                          ), // Full width button
+                          ),
                         ),
-                        child: const Text(
-                          'Add To My List',
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
+                        child: _isSavingFavorite
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Add To My List',
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.white),
+                              ),
                       ),
                       const SizedBox(height: 16), // Space between buttons
                       ElevatedButton(

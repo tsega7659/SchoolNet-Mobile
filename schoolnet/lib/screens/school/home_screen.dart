@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:schoolnet/screens/widgets/bottom_navbar.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:schoolnet/services/auth_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final Map<String, List<String>> filterAnswers;
@@ -12,304 +15,578 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String? _selectedCategory;
+  List<Map<String, dynamic>> _schools = [];
+  List<Map<String, dynamic>> _allSchools = [];
+  bool _isLoading = true;
+  final AuthService _authService = AuthService();
 
- 
+  @override
+  void initState() {
+    super.initState();
+    _fetchFilteredSchools();
+    _fetchAllSchools();
+  }
+
+  Future<void> _fetchFilteredSchools() async {
+    setState(() => _isLoading = true);
+    try {
+      final token = _authService.jwtToken;
+      if (token == null) {
+        throw Exception('Authentication token not found');
+      }
+
+      print('Fetching schools with filters: ${widget.filterAnswers}');
+
+      final response = await http.get(
+        Uri.parse('https://schoolnet-be.onrender.com/api/v1/schools'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'jwt=$token',
+        },
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          final allSchools = data['data']['schools'] as List;
+          print('Total schools fetched: ${allSchools.length}');
+
+          final filteredSchools = allSchools.where((school) {
+            // 1. Location is mandatory - school must match at least one selected location
+            bool locationMatches = false;
+            if (widget.filterAnswers['location']?.isNotEmpty == true) {
+              final schoolAddress = school['address'] as List?;
+              if (schoolAddress != null && schoolAddress.isNotEmpty) {
+                final address = schoolAddress[0] as Map<String, dynamic>;
+                final subCity = address['subCity']?.toString().toLowerCase();
+                if (subCity != null &&
+                    widget.filterAnswers['location']!
+                        .map((loc) => loc.toLowerCase())
+                        .contains(subCity)) {
+                  locationMatches = true;
+                }
+              }
+            }
+
+            if (!locationMatches) return false;
+
+            // 2. Optional filters - school must match ALL specified optional filters
+            bool hasOptionalFilters = false;
+            bool matchesOptionalFilters = true;
+
+            // School type check
+            if (widget.filterAnswers['schoolType']?.isNotEmpty == true) {
+              hasOptionalFilters = true;
+              final schoolType = school['schoolType']?.toString().toLowerCase();
+              if (schoolType != null &&
+                  !widget.filterAnswers['schoolType']!
+                      .any((type) => type.toLowerCase() == schoolType)) {
+                matchesOptionalFilters = false;
+              }
+            }
+
+            // Grade level check
+            if (widget.filterAnswers['gradeLevel']?.isNotEmpty == true) {
+              hasOptionalFilters = true;
+              final schoolLevel = school['division']?.toString().toLowerCase();
+              if (schoolLevel != null &&
+                  !widget.filterAnswers['gradeLevel']!
+                      .any((level) => level.toLowerCase() == schoolLevel)) {
+                matchesOptionalFilters = false;
+              }
+            }
+
+            // Budget check
+            if (widget.filterAnswers['budgetMin'] != null ||
+                widget.filterAnswers['budgetMax'] != null) {
+              hasOptionalFilters = true;
+              final schoolBudgetMin = school['budgetMin'] as int? ?? 0;
+              final schoolBudgetMax = school['budgetMax'] as int? ?? 0;
+              final filterBudgetMin =
+                  widget.filterAnswers['budgetMin'] as int? ?? 0;
+              final filterBudgetMax =
+                  widget.filterAnswers['budgetMax'] as int? ?? 0;
+
+              if (schoolBudgetMin > filterBudgetMax ||
+                  schoolBudgetMax < filterBudgetMin) {
+                matchesOptionalFilters = false;
+              }
+            }
+
+            // If no optional filters are specified, show all schools in the location
+            if (!hasOptionalFilters) {
+              return true;
+            }
+
+            return matchesOptionalFilters;
+          }).toList();
+
+          print('Filtered schools count: ${filteredSchools.length}');
+
+          setState(() {
+            _schools = filteredSchools
+                .map((school) => school as Map<String, dynamic>)
+                .toList();
+          });
+        } else {
+          print('API returned unsuccessful status: ${data['status']}');
+          setState(() {
+            _schools = [];
+          });
+        }
+      } else {
+        print('API request failed with status: ${response.statusCode}');
+        throw Exception(
+            'Failed to load schools: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      print('Error in _fetchFilteredSchools: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching schools: $e')),
+      );
+      setState(() {
+        _schools = [];
+      });
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fetchAllSchools() async {
+    try {
+      final token = _authService.jwtToken;
+      if (token == null) {
+        throw Exception('Authentication token not found');
+      }
+
+      final response = await http.get(
+        Uri.parse('https://schoolnet-be.onrender.com/api/v1/schools'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': 'jwt=$token',
+        },
+      );
+
+      print('All schools response status: ${response.statusCode}');
+      print('All schools response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          setState(() {
+            _allSchools = (data['data']['schools'] as List)
+                .map((school) => school as Map<String, dynamic>)
+                .toList();
+          });
+          print('Total schools fetched: ${_allSchools.length}');
+        }
+      }
+    } catch (e) {
+      print('Error fetching all schools: $e');
+    }
+  }
+
+  String? _mapCategoryToGradeLevel(String category) {
+    switch (category) {
+      case 'KG':
+        return 'Kindergarten';
+      case 'Primary schools':
+        return 'Primary';
+      case 'Middle schools':
+        return 'Middle';
+      case 'High schools':
+        return 'High';
+      default:
+        return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
-
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Search Bar Section
-              Container(
-                padding: const EdgeInsets.all(16),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                            child: TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Search',
-                                hintStyle: TextStyle(color: Colors.grey[600]),
-                                prefixIcon: const Icon(
-                                  Icons.search,
-                                  color: Colors.grey,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 15,
-                                  horizontal: 20,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                  child: TextField(
+                                    decoration: InputDecoration(
+                                      hintText: 'Search',
+                                      hintStyle:
+                                          TextStyle(color: Colors.grey[600]),
+                                      prefixIcon: const Icon(
+                                        Icons.search,
+                                        color: Colors.grey,
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                        vertical: 15,
+                                        horizontal: 20,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              const SizedBox(width: 5),
+                              Row(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(50),
+                                      color: Colors.white,
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () {
+                                        Navigator.pushNamed(
+                                            context, '/filters');
+                                      },
+                                      icon: const Icon(Icons.filter_list),
+                                    ),
+                                  ),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(50),
+                                      color: Colors.white,
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () {
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/notifications',
+                                        );
+                                      },
+                                      icon: const Icon(Icons.notifications),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF5A3B82),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Start your search with extensive filters',
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Image.asset(
+                                    "assets/images/home_screen_image.png",
+                                    width: 150,
+                                    height: 150,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Container(
+                                      width: 150,
+                                      height: 150,
+                                      color: Colors.grey[300],
+                                      child: const Center(
+                                        child: Text('Image Placeholder'),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 4),
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 4),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white.withOpacity(0.5),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 5),
-                        Row(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(50),
-                                color: Colors.white,
-                              ),
-                              child: IconButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, '/filters');
-                                },
-                                icon: const Icon(Icons.filter_list),
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(50),
-                                color: Colors.white,
-                              ),
-                              child: IconButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/notifications',
-                                  );
-                                },
-                                icon: const Icon(Icons.notifications),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF5A3B82),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                'Start your search with extensive filters',
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Popular Categories',
                                 style: TextStyle(
-                                  fontSize: 24,
-                                  color: Colors.white,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              TextButton(
+                                onPressed: () {},
+                                child: const Text(
+                                  'See all',
+                                  style: TextStyle(color: Color(0xFFB188E3)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                _buildCategoryButton(
+                                  'KG',
+                                  'assets/images/primary_image.png',
+                                ),
+                                _buildCategoryButton(
+                                  'Primary schools',
+                                  'assets/images/primary_image.png',
+                                ),
+                                _buildCategoryButton(
+                                  'Middle schools',
+                                  'assets/images/middleschool_inage.png',
+                                ),
+                                _buildCategoryButton(
+                                  'High schools',
+                                  'assets/images/highschool_image.png',
+                                ),
+                              ],
                             ),
-                            Image.asset(
-                              "assets/images/home_screen_image.png",
-                              width: 150,
-                              height: 150,
-                              errorBuilder:
-                                  (context, error, stackTrace) => Container(
-                                    width: 150,
-                                    height: 150,
-                                    color: Colors.grey[300],
-                                    child: const Center(
-                                      child: Text('Image Placeholder'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Schools Near You',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {},
+                                child: const Text(
+                                  'See all',
+                                  style: TextStyle(color: Color(0xFFB188E3)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          _schools.isEmpty
+                              ? const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    child: Text(
+                                      'No schools found',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Container(
-                              width: 8,
-                              height: 8,
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withOpacity(0.5),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                                )
+                              : SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: _schools.map((school) {
+                                      final address =
+                                          school['address'] is List &&
+                                                  (school['address'] as List)
+                                                      .isNotEmpty
+                                              ? (school['address'][0]
+                                                  as Map<String, dynamic>)
+                                              : {
+                                                  'city': 'Unknown',
+                                                  'subCity': 'Unknown'
+                                                };
+
+                                      return _buildSchoolCard(
+                                        school['name'] ?? 'Unknown School',
+                                        '${address['subCity'] ?? 'Unknown'}, ${address['city'] ?? 'Unknown'}',
+                                        school['schoolType'] ?? 'Unknown',
+                                        'K-12',
+                                        '4.0',
+                                        'assets/images/school1.jpg',
+                                        fullSchoolObj: school,
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Popular Categories',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text(
-                            'See all',
-                            style: TextStyle(color: Color(0xFFB188E3)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildCategoryButton(
-                            'KG',
-                            'assets/images/primary_image.png',
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Schools by States',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {},
+                                child: const Text(
+                                  'See all',
+                                  style: TextStyle(color: Color(0xFFB188E3)),
+                                ),
+                              ),
+                            ],
                           ),
-                          _buildCategoryButton(
-                            'Primary schools',
-                            'assets/images/primary_image.png',
+                          const SizedBox(height: 8),
+                          _buildLocationCard(
+                              'Bole', '${_schools.length} schools'),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Our Schools',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {},
+                                child: const Text(
+                                  'See all',
+                                  style: TextStyle(color: Color(0xFFB188E3)),
+                                ),
+                              ),
+                            ],
                           ),
-                          _buildCategoryButton(
-                            'Middle schools',
-                            'assets/images/middleschool_inage.png',
-                          ),
-                          _buildCategoryButton(
-                            'High schools',
-                            'assets/images/highschool_image.png',
-                          ),
+                          const SizedBox(height: 8),
+                          _allSchools.isEmpty
+                              ? const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    child: Text(
+                                      'No schools found',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: _allSchools.map((school) {
+                                      final address =
+                                          school['address'] is List &&
+                                                  (school['address'] as List)
+                                                      .isNotEmpty
+                                              ? (school['address'][0]
+                                                  as Map<String, dynamic>)
+                                              : {
+                                                  'city': 'Unknown',
+                                                  'subCity': 'Unknown'
+                                                };
+
+                                      return _buildSchoolCard(
+                                        school['name'] ?? 'Unknown School',
+                                        '${address['subCity'] ?? 'Unknown'}, ${address['city'] ?? 'Unknown'}',
+                                        school['schoolType'] ?? 'Unknown',
+                                        'K-12',
+                                        '4.0',
+                                        'assets/images/school1.jpg',
+                                        fullSchoolObj: school,
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Schools Near You',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text(
-                            'See all',
-                            style: TextStyle(color: Color(0xFFB188E3)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildSchoolCard(
-                            'John F. Kennedy School',
-                            "Bole, Addis Ababa",
-                            'Public',
-                            "K-12",
-                            '4.9',
-                            'assets/images/school1.jpg',
-                          ),
-                          _buildSchoolCard(
-                            'Thomas J.',
-                            "Bole, Addis Ababa",
-                            'Private',
-                            "K-12",
-                            '4.9',
-                            'assets/images/school2.jpg',
-                          ),
-                          _buildSchoolCard(
-                            'Thomas J.',
-                            "Bole, Addis Ababa",
-                            'Private',
-                            "K-12",
-                            '4.9',
-                            'assets/images/school3.jpg',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Schools by States',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text(
-                            'See all',
-                            style: TextStyle(color: Color(0xFFB188E3)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _buildLocationCard('Bole', '20 schools'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -321,6 +598,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         setState(() {
           _selectedCategory = _selectedCategory == title ? null : title;
+          _fetchFilteredSchools(); // Refetch and filter schools based on category
         });
       },
       child: Container(
@@ -330,28 +608,21 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color:
-                    isSelected
-                        ? const Color(0xFFB188E3)
-                        : const Color.fromRGBO(
-                          254,
-                          254,
-                          255,
-                          1,
-                        ).withOpacity(0.1),
+                color: isSelected
+                    ? const Color(0xFFB188E3)
+                    : const Color.fromRGBO(254, 254, 255, 1).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Image.asset(
                 imagePath,
                 width: 70,
                 height: 70,
-                errorBuilder:
-                    (context, error, stackTrace) => Container(
-                      width: 50,
-                      height: 50,
-                      color: Colors.grey[300],
-                      child: const Center(child: Text('?')),
-                    ),
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 50,
+                  height: 50,
+                  color: Colors.grey[300],
+                  child: const Center(child: Text('?')),
+                ),
               ),
             ),
             const SizedBox(height: 4),
@@ -366,27 +637,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSchoolCard(
-    String name,
-    String location,
-    String type,
-    String level,
-    String rating,
-    String imagePath,
-  ) {
+  Widget _buildSchoolCard(String name, String location, String type,
+      String level, String rating, String imagePath,
+      {required Map<String, dynamic> fullSchoolObj}) {
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(
           context,
           '/schooldetailpage',
-          arguments: {
-            'name': name,
-            'location': location,
-            'type': type,
-            'level': level,
-            'rating': rating,
-            'imagePath': imagePath,
-          },
+          arguments: fullSchoolObj,
         );
       },
       child: Card(
@@ -411,14 +670,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 100,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder:
-                          (context, error, stackTrace) => Container(
-                            height: 100,
-                            color: Colors.grey[300],
-                            child: const Center(
-                              child: Text('Image Placeholder'),
-                            ),
-                          ),
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 100,
+                        color: Colors.grey[300],
+                        child: const Center(
+                          child: Text('Image Placeholder'),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -445,12 +703,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           size: 16,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          location,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontFamily: "WorkSans",
-                            color: Colors.grey,
+                        Expanded(
+                          child: Text(
+                            location,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontFamily: "WorkSans",
+                              color: Colors.grey,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

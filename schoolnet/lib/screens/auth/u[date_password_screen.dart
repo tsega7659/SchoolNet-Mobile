@@ -1,60 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:schoolnet/services/auth_service.dart';
-import 'package:schoolnet/screens/auth/login_screen.dart';
 
-class ResetPasswordScreen extends StatefulWidget {
-  final String?
-      token; // Accept token or null if coming from forgot password flow
-
-  const ResetPasswordScreen({super.key, this.token});
+class UpdatePasswordScreen extends StatefulWidget {
+  const UpdatePasswordScreen({super.key});
 
   @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  State<UpdatePasswordScreen> createState() => _UpdatePasswordScreenState();
 }
 
-class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _otpController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
-  String? _email; // Store email if passed from forgot password
-  String? _resetToken; // Store the token after OTP verification
   final AuthService _authService = AuthService();
 
   @override
-  void initState() {
-    super.initState();
-    // If token is null, assume we came from forgot password with email
-    if (widget.token != null) {
-      _resetToken = widget.token;
-    } else {
-      _email = ModalRoute.of(context)?.settings.arguments as String?;
-    }
-  }
-
-  @override
   void dispose() {
-    _otpController.dispose();
-    _passwordController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  String? _validateOtp(String? value) {
+  String? _validateCurrentPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter the OTP';
-    }
-    if (!RegExp(r'^\d{6}$').hasMatch(value)) {
-      return 'OTP must be a 6-digit number';
+      return 'Please enter your current password';
     }
     return null;
   }
 
-  String? _validatePassword(String? value) {
+  String? _validateNewPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter your password';
+      return 'Please enter your new password';
     }
     if (value.length < 8) {
       return 'Password must be at least 8 characters';
@@ -64,9 +44,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please confirm your password';
+      return 'Please confirm your new password';
     }
-    if (value != _passwordController.text) {
+    if (value != _newPasswordController.text) {
       return 'Passwords do not match';
     }
     return null;
@@ -78,124 +58,67 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     });
   }
 
-  Future<void> _handleResetPassword() async {
+  Future<void> _handleUpdatePassword() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
       try {
-        // If no token yet, verify OTP to get the token
-        if (_resetToken == null && _email != null) {
-          final otpResponse = await _authService.verifyForgotResetOtp(
-            email: _email!,
-            otp: _otpController.text,
-          );
+        final response = await _authService.updateMyPassword(
+          currentPassword: _currentPasswordController.text,
+          newPassword: _newPasswordController.text,
+          confirmPassword: _confirmPasswordController.text,
+        );
 
-          if (otpResponse['status'] != 'success') {
-            setState(() {
-              _isLoading = false;
-            });
-            final error = otpResponse['message'] ?? 'Failed to verify OTP';
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Error'),
-                content: Text(error),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK'),
-                  ),
-                ],
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (response['status'] == 'success') {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-            );
-            return;
-          }
-
-          _resetToken = otpResponse['data']['token'] as String;
-        }
-
-        // Proceed with password reset using the token
-        if (_resetToken != null) {
-          final resetResponse = await _authService.resetPassword(
-            token: _resetToken!,
-            password: _passwordController.text,
-            passwordConfirm: _confirmPasswordController.text,
-          );
-
-          setState(() {
-            _isLoading = false;
-          });
-
-          if (resetResponse['status'] == 'success') {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+              backgroundColor: Colors.white,
+              title: const Text(
+                'Success',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF4A2C2A),
                 ),
-                backgroundColor: Colors.white,
-                title: const Text(
-                  'Success',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF4A2C2A),
-                  ),
-                ),
-                content: const Text(
-                  'Your password has been reset successfully.',
-                  style: TextStyle(color: Colors.grey),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    },
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(
-                        color: Color(0xFFB188E3),
-                        fontWeight: FontWeight.bold,
-                      ),
+              ),
+              content: const Text(
+                'Your password has been updated successfully.',
+                style: TextStyle(color: Colors.grey),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close dialog
+                    Navigator.pop(context); // Return to previous screen
+                  },
+                  child: const Text(
+                    'OK',
+                    style: TextStyle(
+                      color: Color(0xFFB188E3),
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
-              ),
-            );
-          } else {
-            final error =
-                resetResponse['message'] ?? 'Failed to reset password';
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Error'),
-                content: Text(error),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-            );
-          }
+                ),
+              ],
+            ),
+          );
         } else {
-          setState(() {
-            _isLoading = false;
-          });
+          final error = response['message'] ?? 'Failed to update password';
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Error'),
-              content: const Text('No valid token available.'),
+              content: Text(error),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -230,6 +153,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Update Password'),
+        backgroundColor: const Color(0xFFB188E3),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Form(
@@ -237,54 +164,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  width: double.infinity,
-                  height: 400,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFB188E3),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(800),
-                      bottomRight: Radius.circular(800),
-                    ),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      const Positioned(
-                        top: 65,
-                        child: Text(
-                          'Set New\nPassword',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: "WorkSans",
-                            fontSize: 60,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF4A2C2A),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: -10,
-                        child: SizedBox(
-                          width: 300,
-                          height: 300,
-                          child: Center(
-                            child: Image.asset(
-                              'assets/images/forgot_password.png',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                 const SizedBox(height: 20),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 30),
                   child: Text(
-                    'Enter the 6-digit OTP sent to your email and your new password (at least 8 characters).',
+                    'Enter your current password and new password (at least 8 characters).',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
@@ -293,19 +177,28 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: TextFormField(
-                    controller: _otpController,
-                    validator: _validateOtp,
-                    keyboardType: TextInputType.number,
+                    controller: _currentPasswordController,
+                    validator: _validateCurrentPassword,
+                    obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(
-                        Icons.vpn_key_outlined,
+                        Icons.lock_outlined,
                         color: Colors.grey,
                       ),
-                      hintText: 'Enter 6-digit OTP',
-                      labelText: 'OTP',
+                      hintText: 'Enter your current password',
+                      labelText: 'Current Password',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(50),
                         borderSide: const BorderSide(color: Colors.grey),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: Colors.grey,
+                        ),
+                        onPressed: _togglePasswordVisibility,
                       ),
                     ),
                   ),
@@ -314,8 +207,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: TextFormField(
-                    controller: _passwordController,
-                    validator: _validatePassword,
+                    controller: _newPasswordController,
+                    validator: _validateNewPassword,
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(
@@ -385,7 +278,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleResetPassword,
+                      onPressed: _isLoading ? null : _handleUpdatePassword,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
@@ -398,7 +291,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                               color: Colors.white,
                             )
                           : const Text(
-                              'Set New Password',
+                              'Update Password',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,

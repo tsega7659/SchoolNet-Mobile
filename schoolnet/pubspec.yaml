@@ -38,6 +38,7 @@ dependencies:
   flutter_svg: ^2.1.0
   http: ^1.3.0
   app_links: ^6.4.0
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -84,6 +85,8 @@ flutter:
      - assets/images/review_image.jpg
      - assets/images/staff.jpg
      - assets/images/schoolnetlogo.png
+     - assets/images/schoolnetlogo.svg
+
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

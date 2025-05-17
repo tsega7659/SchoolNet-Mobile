@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:schoolnet/screens/auth/forgot_password_screen.dart';
 import 'package:schoolnet/screens/auth/login_screen.dart';
 import 'package:schoolnet/screens/profile/edit_profile.dart';
 import 'package:schoolnet/screens/profile/profile_screen.dart';
 import 'package:schoolnet/screens/school/acadamics.dart';
 import 'package:schoolnet/screens/school/admissions.dart';
+import 'package:schoolnet/screens/school/favorites_screen.dart';
 import 'package:schoolnet/screens/school/fees.dart';
 import 'package:schoolnet/screens/school/filter_screen.dart';
 import 'package:schoolnet/screens/school/home_screen.dart';
+import 'package:schoolnet/screens/school/results.dart';
 import 'package:schoolnet/screens/school/school_detail.dart';
 import 'package:schoolnet/screens/school/staff.dart';
 import 'package:schoolnet/screens/school/staff_detail.dart';
@@ -39,6 +42,9 @@ class AppRoutes {
   static const String staffDetails = '/staffDetails';
   static const String filtter = '/filters';
   static const String edit_profile = '/edit_profile';
+  static const String forgot_password = '/forgot_password';
+  static const String favorite = '/favorites';
+  static const String result = "/results";
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -64,12 +70,13 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const SchoolFilterScreen());
       case schoolDetails:
         return MaterialPageRoute(
-          builder: (_) => const SchoolDetailPage(schoolDetails: {}),
+          builder: (_) => SchoolDetailPage(
+              schoolDetails: settings.arguments as Map<String, dynamic>),
         );
       case resetPassword:
         return MaterialPageRoute(
-          builder:
-              (_) => ResetPasswordScreen(token: settings.arguments as String),
+          builder: (_) =>
+              ResetPasswordScreen(token: settings.arguments as String),
         );
       case acadamics:
         return MaterialPageRoute(builder: (_) => const AcadamicsScreen());
@@ -87,12 +94,17 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => ProfileScreen());
       case edit_profile:
         return MaterialPageRoute(builder: (_) => const EditProfileScreen());
+      case forgot_password:
+        return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());
+      case favorite:
+        return MaterialPageRoute(builder: (_) => const FavoritesScreen());
+      case result:
+        return MaterialPageRoute(builder: (_) => const ResultScreen());
 
       default:
         return MaterialPageRoute(
-          builder:
-              (_) =>
-                  const Scaffold(body: Center(child: Text('Page not found'))),
+          builder: (_) =>
+              const Scaffold(body: Center(child: Text('Page not found'))),
         );
     }
   }

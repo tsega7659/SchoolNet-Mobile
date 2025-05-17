@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:schoolnet/screens/auth/signup_screen.dart';
-import 'package:schoolnet/screens/auth/forgot_password_screen.dart';
 import 'package:schoolnet/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -56,10 +54,9 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         _isLoading = true;
       });
-
       try {
-        final response = await _authService.login(
-          email: _emailController.text,
+        final result = await _authService.login(
+          email: _emailController.text.trim(),
           password: _passwordController.text,
         );
 
@@ -67,15 +64,17 @@ class _LoginScreenState extends State<LoginScreen> {
           _isLoading = false;
         });
 
-        if (response['status'] == 'success') {
-          Navigator.pushReplacementNamed(context, '/school_filter');
+        if (result['status'] == 'success') {
+          print('Login successful, token: ${_authService.jwtToken}');
+          
+          Navigator.pushReplacementNamed(
+              context, '/userstatus');
         } else {
-          final error = response['message'] ?? 'Login failed';
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Error'),
-              content: Text(error),
+              content: Text(result['message'] ?? 'Login failed'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -93,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Error'),
-            content: const Text('An error occurred. Please try again.'),
+            content: Text('An error occurred: $e'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -281,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/signup');
+                        Navigator.pushNamed(context, '/register');
                       },
                       style: TextButton.styleFrom(
                         foregroundColor: const Color(0xFFB188E3),

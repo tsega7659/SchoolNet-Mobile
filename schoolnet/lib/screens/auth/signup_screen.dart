@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:schoolnet/screens/auth/login_screen.dart';
 import 'package:schoolnet/services/auth_service.dart';
-import 'package:schoolnet/models/verify_email_model.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -20,6 +19,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _otpController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isOtpVisible = false;
+  bool _isLoading = false;
   final AuthService _authService = AuthService();
 
   @override
@@ -94,13 +94,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _handleSignUp() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
       try {
+        print('Attempting signup with:');
+        print('Email: ${_emailController.text.trim()}');
+        print('Phone: ${_phoneController.text.trim()}');
+        print('Password: ${_passwordController.text}');
+
         final result = await _authService.signUp(
-          phoneNumber: _phoneController.text,
-          email: _emailController.text,
+          phoneNumber: _phoneController.text.trim(),
+          email: _emailController.text.trim(),
           password: _passwordController.text,
           passwordConfirm: _passwordConfirmController.text,
         );
+
+        print('Signup result: $result');
+
+        setState(() {
+          _isLoading = false;
+        });
 
         if (result['status'] == 'success') {
           setState(() {
@@ -139,7 +153,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           );
         } else {
-          final error = result['message'] ?? 'Signup failed';
+          String error = result['message'] ?? 'Signup failed';
+          // Customize error message for specific cases
+          if (error.contains('AUTH PLAIN')) {
+            error =
+                'Failed to send verification email due to server configuration. Please try again later or contact support.';
+          } else if (error.contains('User already exists')) {
+            error =
+                'This email is already registered but not verified. Please check your email (including spam/junk) for the OTP to complete verification.';
+          } else if (error.contains('duplicate key')) {
+            error = 'This email or phone number is already registered.';
+          }
+          print('Signup error displayed to user: $error');
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -155,11 +180,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
         }
       } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+        print('Signup exception: $e');
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Error'),
-            content: const Text('An error occurred. Please try again.'),
+            content: Text('An unexpected error occurred: $e'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -174,13 +203,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _handleVerifyOtp() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
       try {
         final response = await _authService.verifyEmail(
-          _emailController.text,
+          _emailController.text.trim(),
           _otpController.text,
         );
-        print(
-            'Verification result: isSuccess=${response.isSuccess}, message=${response.message}');
+        setState(() {
+          _isLoading = false;
+        });
+
         if (response.isSuccess) {
           Navigator.pushReplacement(
             context,
@@ -203,12 +237,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
         }
       } catch (e) {
-        print('Verification error: $e');
+        setState(() {
+          _isLoading = false;
+        });
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Error'),
-            content: const Text('An error occurred. Please try again.'),
+            content: Text('An error occurred: $e'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -226,285 +262,304 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  margin: EdgeInsets.only(bottom: 20),
-                  width: double.infinity,
-                  height: 250,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFB188E3),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(800),
-                      bottomRight: Radius.circular(800),
-                    ),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Positioned(
-                        top: 50,
-                        child: Text(
-                          'Sign-Up',
-                          style: TextStyle(
-                            fontFamily: "WorkSans",
-                            fontSize: 60,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF4A2C2A),
-                          ),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 20),
+                      width: double.infinity,
+                      height: 250,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFB188E3),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(800),
+                          bottomRight: Radius.circular(800),
                         ),
                       ),
-                      Positioned(
-                        bottom: -50,
-                        child: SizedBox(
-                          width: 250,
-                          height: 250,
-                          child: Center(
-                            child: Image.asset(
-                              'assets/images/signup_image.png',
-                              fit: BoxFit.cover,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          const Positioned(
+                            top: 50,
+                            child: Text(
+                              'Sign-Up',
+                              style: TextStyle(
+                                fontFamily: "WorkSans",
+                                fontSize: 60,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF4A2C2A),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -50,
+                            child: SizedBox(
+                              width: 250,
+                              height: 250,
+                              child: Center(
+                                child: Image.asset(
+                                  'assets/images/signup_image.png',
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    if (!_isOtpVisible) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: TextFormField(
+                          controller: _emailController,
+                          validator: _validateEmail,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(
+                              Icons.email_outlined,
+                              color: Colors.grey,
+                            ),
+                            hintText: 'email@gmail.com',
+                            labelText: 'Email',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(50),
+                              borderSide: const BorderSide(color: Colors.grey),
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 30),
-                if (!_isOtpVisible) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: TextFormField(
-                      controller: _emailController,
-                      validator: _validateEmail,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.email_outlined,
-                          color: Colors.grey,
-                        ),
-                        hintText: 'email@gmail.com',
-                        labelText: 'Email',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(50),
-                          borderSide: const BorderSide(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: TextFormField(
-                      controller: _phoneController,
-                      validator: _validatePhone,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.phone_android_outlined,
-                          color: Colors.grey,
-                        ),
-                        hintText: 'Enter your phone no',
-                        labelText: 'Phone No',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(50),
-                          borderSide: const BorderSide(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: TextFormField(
-                      controller: _passwordController,
-                      validator: _validatePassword,
-                      obscureText: !_isPasswordVisible,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.lock_outlined,
-                          color: Colors.grey,
-                        ),
-                        hintText: 'Enter your password',
-                        labelText: 'Password',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(50),
-                          borderSide: const BorderSide(color: Colors.grey),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: Colors.grey,
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: TextFormField(
+                          controller: _phoneController,
+                          validator: _validatePhone,
+                          keyboardType: TextInputType.phone,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(
+                              Icons.phone_android_outlined,
+                              color: Colors.grey,
+                            ),
+                            hintText: 'Enter your phone no',
+                            labelText: 'Phone No',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(50),
+                              borderSide: const BorderSide(color: Colors.grey),
+                            ),
                           ),
-                          onPressed: _togglePasswordVisibility,
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: TextFormField(
-                      controller: _passwordConfirmController,
-                      validator: _validatePasswordConfirm,
-                      obscureText: !_isPasswordVisible,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.lock_outlined,
-                          color: Colors.grey,
-                        ),
-                        hintText: 'Confirm your password',
-                        labelText: 'Confirm Password',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(50),
-                          borderSide: const BorderSide(color: Colors.grey),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: Colors.grey,
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: TextFormField(
+                          controller: _passwordController,
+                          validator: _validatePassword,
+                          obscureText: !_isPasswordVisible,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(
+                              Icons.lock_outlined,
+                              color: Colors.grey,
+                            ),
+                            hintText: 'Enter your password',
+                            labelText: 'Password',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(50),
+                              borderSide: const BorderSide(color: Colors.grey),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: Colors.grey,
+                              ),
+                              onPressed: _togglePasswordVisibility,
+                            ),
                           ),
-                          onPressed: _togglePasswordVisibility,
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 60),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Container(
-                      width: double.infinity,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF4A2C2A), Color(0xFFB188E3)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: TextFormField(
+                          controller: _passwordConfirmController,
+                          validator: _validatePasswordConfirm,
+                          obscureText: !_isPasswordVisible,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(
+                              Icons.lock_outlined,
+                              color: Colors.grey,
+                            ),
+                            hintText: 'Confirm your password',
+                            labelText: 'Confirm Password',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(50),
+                              borderSide: const BorderSide(color: Colors.grey),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: Colors.grey,
+                              ),
+                              onPressed: _togglePasswordVisibility,
+                            ),
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(25),
                       ),
-                      child: ElevatedButton(
-                        onPressed: _handleSignUp,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
+                      const SizedBox(height: 60),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Container(
+                          width: double.infinity,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF4A2C2A), Color(0xFFB188E3)],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
                             borderRadius: BorderRadius.circular(25),
                           ),
-                        ),
-                        child: const Text(
-                          'Create Account',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _handleSignUp,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : const Text(
+                                    'Create Account',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    '- or -',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+                      const SizedBox(height: 20),
                       const Text(
-                        "Already have an account?",
-                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                        '- or -',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const LoginScreen()),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFB188E3),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Already have an account?",
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const LoginScreen()),
+                              );
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFFB188E3),
+                            ),
+                            child: const Text(
+                              "Login",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (_isOtpVisible) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: TextFormField(
+                          controller: _otpController,
+                          validator: _validateOtp,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(
+                              Icons.vpn_key_outlined,
+                              color: Colors.grey,
+                            ),
+                            hintText: 'Enter 6-digit OTP',
+                            labelText: 'OTP',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(50),
+                              borderSide: const BorderSide(color: Colors.grey),
+                            ),
+                          ),
                         ),
-                        child: const Text(
-                          "Login",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                      ),
+                      const SizedBox(height: 60),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Container(
+                          width: double.infinity,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF4A2C2A), Color(0xFFB188E3)],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _handleVerifyOtp,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : const Text(
+                                    'Verify OTP',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),
                     ],
-                  ),
-                ],
-                if (_isOtpVisible) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: TextFormField(
-                      controller: _otpController,
-                      validator: _validateOtp,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.vpn_key_outlined,
-                          color: Colors.grey,
-                        ),
-                        hintText: 'Enter 6-digit OTP',
-                        labelText: 'OTP',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(50),
-                          borderSide: const BorderSide(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 60),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Container(
-                      width: double.infinity,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF4A2C2A), Color(0xFFB188E3)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: ElevatedButton(
-                        onPressed: _handleVerifyOtp,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                        ),
-                        child: const Text(
-                          'Verify OTP',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 20),
-              ],
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
             ),
-          ),
+            if (_isLoading)
+              Container(
+                color: Colors.black.withOpacity(0.3),
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+          ],
         ),
       ),
     );

@@ -151,11 +151,10 @@ class OnboardingPageWidget extends StatelessWidget {
                           ),
                         ),
                       )
-                    : const SizedBox(
-                        width: 0), // Hide back button on first page
+                    : const SizedBox(width: 0),
                 TextButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/userstatus');
+                    Navigator.pushNamed(context, '/login');
                   },
                   child: const Text(
                     'Skip',

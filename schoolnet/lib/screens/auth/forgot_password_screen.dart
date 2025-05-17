@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:schoolnet/screens/auth/reset_password_screen.dart';
+import 'package:schoolnet/services/auth_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -14,6 +12,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   bool _isLoading = false;
+  final AuthService _authService = AuthService();
 
   @override
   void dispose() {
@@ -38,72 +37,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       });
 
       try {
-        final response = await http.post(
-          Uri.parse(
-            'https://schoolnet-be.onrender.com/api/v1/users/forgotPassword',
-          ),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'email': _emailController.text}),
-        );
+        final response =
+            await _authService.forgotPassword(_emailController.text);
 
         setState(() {
           _isLoading = false;
         });
 
-        if (response.statusCode == 200) {
-          showDialog(
-            context: context,
-            builder:
-                (context) => AlertDialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  backgroundColor: Colors.white,
-                  title: const Text(
-                    'Reset Link Sent',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A2C2A),
-                    ),
-                  ),
-                  content: const Text(
-                    'A password reset link has been sent to your email. Please check your inbox.',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Close dialog
-                        Navigator.pop(context); // Go back to login screen
-                      },
-                      child: const Text(
-                        'OK',
-                        style: TextStyle(
-                          color: Color(0xFFB188E3),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-          );
+        if (response['status'] == 'success') {
+          // Navigate to ResetPasswordScreen with a placeholder (OTP will be handled there)
+          Navigator.pushNamed(context, '/resetPassword',
+              arguments: _emailController.text);
         } else {
-          final error =
-              jsonDecode(response.body)['message'] ??
-              'Failed to send reset link';
+          final error = response['message'] ?? 'Failed to send OTP';
           showDialog(
             context: context,
-            builder:
-                (context) => AlertDialog(
-                  title: const Text('Error'),
-                  content: Text(error),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('OK'),
-                    ),
-                  ],
+            builder: (context) => AlertDialog(
+              title: const Text('Error'),
+              content: Text(error),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
                 ),
+              ],
+            ),
           );
         }
       } catch (e) {
@@ -112,17 +70,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         });
         showDialog(
           context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Error'),
-                content: const Text('An error occurred. Please try again.'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK'),
-                  ),
-                ],
+          builder: (context) => AlertDialog(
+            title: const Text('Error'),
+            content: const Text('An error occurred. Please try again.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
               ),
+            ],
+          ),
         );
       }
     }
@@ -186,7 +143,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 30),
                   child: Text(
-                    "Please enter your email address.",
+                    "Enter your email to receive a 6-digit OTP.",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
@@ -234,19 +191,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           borderRadius: BorderRadius.circular(25),
                         ),
                       ),
-                      child:
-                          _isLoading
-                              ? const CircularProgressIndicator(
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                          : const Text(
+                              'Send OTP',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
                                 color: Colors.white,
-                              )
-                              : const Text(
-                                'Reset Password',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
                               ),
+                            ),
                     ),
                   ),
                 ),

@@ -41,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen> {
             width: screenSize.width * 0.80,
             height: screenSize.height * 0.3,
             child: SvgPicture.asset(
-              'assets/images/schoolnet1logo.svg',
+              'assets/images/schoolnetlogo.svg',
               fit: BoxFit.contain,
             ),
           ),
