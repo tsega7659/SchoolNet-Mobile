@@ -53,7 +53,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.userstatus);
+      Navigator.of(context).pushReplacementNamed(AppRoutes.login);
     }
   }
 
