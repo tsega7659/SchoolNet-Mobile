@@ -3,6 +3,7 @@ import 'package:schoolnet/screens/widgets/bottom_navbar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:schoolnet/services/auth_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class SchoolDetailPage extends StatefulWidget {
   final Map<String, dynamic> schoolDetails;
@@ -32,7 +33,8 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
     try {
       print('Adding school to favorites: ${widget.schoolDetails['_id']}');
       final response = await http.patch(
-        Uri.parse('https://schoolnet-be.onrender.com/api/v1/parentProfiles/saveSchool'),
+        Uri.parse(
+            'https://schoolnet-be.onrender.com/api/v1/parentProfiles/saveSchool'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -53,12 +55,15 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
       } else if (response.statusCode == 404) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('No parent profile found. Please complete onboarding or profile setup.')),
+              content: Text(
+                  'No parent profile found. Please complete onboarding or profile setup.')),
         );
       } else {
         final error = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add school: ${error['message'] ?? response.body}')),
+          SnackBar(
+              content: Text(
+                  'Failed to add school: ${error['message'] ?? response.body}')),
         );
       }
     } catch (e) {
@@ -69,6 +74,113 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
     } finally {
       setState(() => _isSavingFavorite = false);
     }
+  }
+
+  Widget _buildFacilitiesSection(List<dynamic>? facilities) {
+    if (facilities == null || facilities.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Text(
+          'No facilities available',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Facilities',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'WorkSans',
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 150, // Adjust based on design
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: facilities.asMap().entries.map((entry) {
+                final facility = entry.value as Map<String, dynamic>;
+                final name = facility['name']?.toString() ?? 'Unknown Facility';
+                final imgPath = (facility['img_path'] is List &&
+                        (facility['img_path'] as List).isNotEmpty)
+                    ? (facility['img_path'] as List)[0].toString()
+                    : null;
+                final imageUrl = imgPath != null
+                    ? 'https://schoolnet-be.onrender.com/uploads/$imgPath'
+                    : null;
+
+                return Container(
+                  width: 120,
+                  margin: const EdgeInsets.only(right: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: imageUrl != null
+                            ? CachedNetworkImage(
+                                imageUrl: imageUrl,
+                                httpHeaders: {
+                                  'Cookie':
+                                      'jwt=${AuthService().jwtToken ?? ''}',
+                                },
+                                height: 100,
+                                width: 120,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(
+                                  height: 100,
+                                  width: 120,
+                                  color: Colors.grey[300],
+                                  child: const Center(
+                                      child: CircularProgressIndicator()),
+                                ),
+                                errorWidget: (context, url, error) {
+                                  print(
+                                      'Failed to load facility image: $imageUrl, error: $error');
+                                  return Container(
+                                    height: 100,
+                                    width: 120,
+                                    color: Colors.grey[300],
+                                    child: const Center(
+                                        child: Text('Image Unavailable')),
+                                  );
+                                },
+                              )
+                            : Container(
+                                height: 100,
+                                width: 120,
+                                color: Colors.grey[300],
+                                child: const Center(child: Text('No Image')),
+                              ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -136,16 +248,22 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                   child: Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(50),
                         ),
-                        child: Icon(Icons.favorite_border, color: Colors.black),
+                        child: GestureDetector(
+                          onTap: _isSavingFavorite ? null : _addToFavorites,
+                          child: Icon(
+                            Icons.favorite_border,
+                            color: Colors.black,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(50),
@@ -364,7 +482,10 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+                  // Facilities Section
+                  _buildFacilitiesSection(schoolDetails['schoolFacilities']),
+                  const SizedBox(height: 16),
                   // Admissions
                   GestureDetector(
                     onTap: () {
@@ -473,71 +594,6 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                     endIndent: 5,
                   ),
                   SizedBox(height: 16),
-                  // Reviews
-                  const Text(
-                    'Reviews',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: AssetImage(
-                        'assets/images/review_image.jpg',
-                      ),
-                      radius: 20,
-                    ),
-                    title: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'John Smith',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE9E8FC),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: Text(
-                              'Parent',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Color(0xFFFDB022),
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            const Text('4.8', style: TextStyle(fontSize: 14)),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                            'Lorem ipsum dolor sit amet consectetur. Suspendisse cursus. First lorem dolor quam adipiscing.',
-                            style: const TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Follow Button
                   Column(
                     children: [
                       ElevatedButton(
@@ -571,30 +627,6 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                               ),
                       ),
                       const SizedBox(height: 16), // Space between buttons
-                      ElevatedButton(
-                        onPressed: () {
-                          // Add "Follow" logic here
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF5A3B82),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              30,
-                            ), // Increased roundness
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 16, // Adjusted padding for better height
-                          ),
-                          minimumSize: const Size(
-                            double.infinity,
-                            50,
-                          ), // Full width button
-                        ),
-                        child: const Text(
-                          'Follow',
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      ),
                     ],
                   ),
                 ],

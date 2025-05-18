@@ -374,7 +374,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
+    // Construct profile image URL
+    String? profileImageUrl;
+    final imgPath = profileData?['img']?.toString();
+    if (imgPath != null && imgPath.isNotEmpty && imgPath != 'default.png') {
+      profileImageUrl = 'https://schoolnet-be.onrender.com/uploads/$imgPath';
+      print('Attempting to load profile image: $profileImageUrl');
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF5A3B82),
       appBar: AppBar(
@@ -412,16 +421,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 32),
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 50,
-                    backgroundImage: AssetImage('assets/images/staff.jpg'),
+                    backgroundImage: profileImageUrl != null
+                        ? NetworkImage(
+                            profileImageUrl,
+                            headers: {
+                              'Cookie': 'jwt=${AuthService().jwtToken ?? ''}',
+                            },
+                          )
+                        : const AssetImage('assets/images/user.png')
+                            as ImageProvider,
+                    onBackgroundImageError: profileImageUrl != null
+                        ? (exception, stackTrace) {
+                            print('Failed to load profile image: $exception');
+                          }
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     profileData?['firstName'] != null &&
                             profileData?['lastName'] != null
                         ? '${profileData?['firstName']} ${profileData?['lastName']}'
-                        : profileData?['name'] ?? 'Not specified',
+                        : profileData?['name'] ?? 'Parent',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -429,15 +451,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    userData?['email'] ?? 'Not specified',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    userData?['phoneNumber'] ?? 'Not specified',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
@@ -481,65 +494,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 16),
                         _buildPreferenceItem(
                           'Number of Children',
-                          (profileData?['numberOfChildren'] is List)
-                              ? (profileData?['numberOfChildren'] as List)
-                                  .join(', ')
-                              : profileData?['numberOfChildren'] ??
+                          profileData?['numberOfChildren'] is List
+                              ? ((profileData?['numberOfChildren'] as List)
+                                      .isNotEmpty
+                                  ? (profileData?['numberOfChildren'] as List)
+                                      .first
+                                      .toString()
+                                  : _filterAnswers?['numChildren']?.first ??
+                                      'Not specified')
+                              : profileData?['numberOfChildren']?.toString() ??
                                   _filterAnswers?['numChildren']?.first ??
                                   'Not specified',
                         ),
-                        if ((profileData?['numberOfChildren'] is List
-                                    ? (profileData?['numberOfChildren'] as List)
-                                        .join(', ')
-                                    : profileData?['numberOfChildren'] ??
-                                        _filterAnswers?['numChildren']?.first ??
-                                        '') ==
-                                'Two' ||
-                            (profileData?['numberOfChildren'] is List
-                                    ? (profileData?['numberOfChildren'] as List)
-                                        .join(', ')
-                                    : profileData?['numberOfChildren'] ??
-                                        _filterAnswers?['numChildren']?.first ??
-                                        '') ==
-                                'More than two')
+                        if ((profileData?['numberOfChildren'] is List &&
+                                ((profileData?['numberOfChildren'] as List)
+                                        .contains('two') ||
+                                    (profileData?['numberOfChildren'] as List)
+                                        .contains('more than two'))) ||
+                            (_filterAnswers?['numChildren']?.first == 'Two' ||
+                                _filterAnswers?['numChildren']?.first ==
+                                    'More than two'))
                           _buildPreferenceItem(
                             'Same School Preference',
-                            profileData?['childrenDetails']?['sameSchool'] ??
+                            profileData?['childrenDetails']?['sameSchool']
+                                    ?.toString() ??
                                 _filterAnswers?['sameSchool']?.first ??
                                 'Not specified',
                           ),
                         _buildPreferenceItem(
                           'Preferred School Type',
                           (profileData?['childrenDetails']?['schoolType']
-                                  is List)
-                              ? (profileData?['childrenDetails']?['schoolType']
-                                      as List)
-                                  .join(', ')
-                              : profileData?['childrenDetails']
-                                      ?['schoolType'] ??
-                                  _filterAnswers?['schoolType']?.first ??
-                                  'Not specified',
+                                      as List<dynamic>?)
+                                  ?.map((e) => e.toString())
+                                  .join(', ') ??
+                              _filterAnswers?['schoolType']?.join(', ') ??
+                              'Not specified',
                         ),
                         _buildPreferenceItem(
                           'Grade Level',
                           (profileData?['childrenDetails']?['gradeLevels']
-                                  is List)
-                              ? (profileData?['childrenDetails']?['gradeLevels']
-                                      as List)
-                                  .join(', ')
-                              : profileData?['childrenDetails']
-                                      ?['gradeLevels'] ??
-                                  _filterAnswers?['gradeLevel']?.join(', ') ??
-                                  'Not specified',
+                                      as List<dynamic>?)
+                                  ?.map((e) => e.toString())
+                                  .join(', ') ??
+                              _filterAnswers?['gradeLevel']?.join(', ') ??
+                              'Not specified',
                         ),
-                        _buildPreferenceItem('Budget Range',
-                            '${profileData?['budgetMin'] ?? _budgetMin ?? 'Not specified'} - ${profileData?['budgetMax'] ?? _budgetMax ?? 'Not specified'}'),
                         _buildPreferenceItem(
-                            'Location',
-                            (profileData?['address']?['subCity'] ??
-                                    profileData?['address']?['city']) ??
-                                _filterAnswers?['location']?.first ??
-                                'Not specified'),
+                          'Budget Range',
+                          '${profileData?['budgetMin'] ?? _budgetMin ?? 'Not specified'} - ${profileData?['budgetMax'] ?? _budgetMax ?? 'Not specified'}',
+                        ),
+                        _buildPreferenceItem(
+                          'Location',
+                          profileData?['address']?['subCity']?.toString() ??
+                              _filterAnswers?['location']?.first ??
+                              'Not specified',
+                        ),
                       ],
                     ),
                   ),
@@ -553,17 +562,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.favorite_border,
                         title: 'Favourites',
                         onTap: () {
-                          // Add navigation to Favourites
+                          Navigator.pushNamed(context, '/favorites');
                         },
                       ),
-                      // _buildProfileOption(
-                      //   context,
-                      //   icon: Icons.location_on_outlined,
-                      //   title: 'Location',
-                      //   onTap: () {
-                      //     // Add navigation to Location
-                      //   },
-                      // ),
                       _buildProfileOption(
                         context,
                         icon: Icons.settings_outlined,

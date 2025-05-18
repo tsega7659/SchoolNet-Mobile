@@ -17,14 +17,58 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedCategory;
   List<Map<String, dynamic>> _schools = [];
   List<Map<String, dynamic>> _allSchools = [];
+  List<Map<String, dynamic>> _searchResults = [];
   bool _isLoading = true;
   final AuthService _authService = AuthService();
+  Map<String, List<String>> _filterAnswers = {};
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _filterAnswers = widget.filterAnswers;
+    print('Initial _filterAnswers in initState: $_filterAnswers');
     _fetchFilteredSchools();
     _fetchAllSchools();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _searchResults = [];
+      } else {
+        _searchResults = _allSchools
+            .where((school) =>
+                school['name']?.toString().toLowerCase().contains(query) ??
+                false)
+            .toList();
+      }
+    });
+    print('Search query: $query, Results count: ${_searchResults.length}');
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    print('Raw arguments received in HomeScreen: $args');
+    if (args != null && args is Map<String, List<String>>) {
+      setState(() {
+        _filterAnswers = args;
+      });
+      print(
+          'HomeScreen received filterAnswers from arguments: \n$_filterAnswers');
+    } else {
+      print('HomeScreen did not receive filterAnswers from arguments.');
+    }
   }
 
   Future<void> _fetchFilteredSchools() async {
@@ -35,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
         throw Exception('Authentication token not found');
       }
 
-      print('Fetching schools with filters: ${widget.filterAnswers}');
+      print('Fetching schools with filters: $_filterAnswers');
 
       final response = await http.get(
         Uri.parse('https://schoolnet-be.onrender.com/api/v1/schools'),
@@ -54,77 +98,46 @@ class _HomeScreenState extends State<HomeScreen> {
           final allSchools = data['data']['schools'] as List;
           print('Total schools fetched: ${allSchools.length}');
 
+          // Log schools in the selected location
+          final locationSchools = allSchools.where((school) {
+            final schoolAddress = school['address'] as List?;
+            String? subCity;
+            if (schoolAddress != null && schoolAddress.isNotEmpty) {
+              subCity =
+                  schoolAddress[0]['subCity']?.toString().toLowerCase().trim();
+            }
+            return _filterAnswers['location']
+                    ?.map((loc) => loc.toLowerCase().trim())
+                    .contains(subCity) ??
+                false;
+          }).toList();
+          print(
+              'Schools in location ${_filterAnswers['location']}: $locationSchools');
+
           final filteredSchools = allSchools.where((school) {
-            // 1. Location is mandatory - school must match at least one selected location
-            bool locationMatches = false;
-            if (widget.filterAnswers['location']?.isNotEmpty == true) {
-              final schoolAddress = school['address'] as List?;
-              if (schoolAddress != null && schoolAddress.isNotEmpty) {
-                final address = schoolAddress[0] as Map<String, dynamic>;
-                final subCity = address['subCity']?.toString().toLowerCase();
-                if (subCity != null &&
-                    widget.filterAnswers['location']!
-                        .map((loc) => loc.toLowerCase())
-                        .contains(subCity)) {
-                  locationMatches = true;
-                }
-              }
+            // Location filter (only criteria)
+            final userLocations = _filterAnswers['location']
+                    ?.map((loc) => loc.toLowerCase().trim())
+                    .toList() ??
+                [];
+            final schoolAddress = school['address'] as List?;
+            String? subCity;
+            if (schoolAddress != null && schoolAddress.isNotEmpty) {
+              final address = schoolAddress[0] as Map<String, dynamic>;
+              subCity = address['subCity']?.toString().toLowerCase().trim();
             }
-
-            if (!locationMatches) return false;
-
-            // 2. Optional filters - school must match ALL specified optional filters
-            bool hasOptionalFilters = false;
-            bool matchesOptionalFilters = true;
-
-            // School type check
-            if (widget.filterAnswers['schoolType']?.isNotEmpty == true) {
-              hasOptionalFilters = true;
-              final schoolType = school['schoolType']?.toString().toLowerCase();
-              if (schoolType != null &&
-                  !widget.filterAnswers['schoolType']!
-                      .any((type) => type.toLowerCase() == schoolType)) {
-                matchesOptionalFilters = false;
-              }
+            print(
+                'Comparing userLocations: $userLocations with school subCity: $subCity');
+            if (subCity == null || !userLocations.contains(subCity)) {
+              return false;
             }
-
-            // Grade level check
-            if (widget.filterAnswers['gradeLevel']?.isNotEmpty == true) {
-              hasOptionalFilters = true;
-              final schoolLevel = school['division']?.toString().toLowerCase();
-              if (schoolLevel != null &&
-                  !widget.filterAnswers['gradeLevel']!
-                      .any((level) => level.toLowerCase() == schoolLevel)) {
-                matchesOptionalFilters = false;
-              }
-            }
-
-            // Budget check
-            if (widget.filterAnswers['budgetMin'] != null ||
-                widget.filterAnswers['budgetMax'] != null) {
-              hasOptionalFilters = true;
-              final schoolBudgetMin = school['budgetMin'] as int? ?? 0;
-              final schoolBudgetMax = school['budgetMax'] as int? ?? 0;
-              final filterBudgetMin =
-                  widget.filterAnswers['budgetMin'] as int? ?? 0;
-              final filterBudgetMax =
-                  widget.filterAnswers['budgetMax'] as int? ?? 0;
-
-              if (schoolBudgetMin > filterBudgetMax ||
-                  schoolBudgetMax < filterBudgetMin) {
-                matchesOptionalFilters = false;
-              }
-            }
-
-            // If no optional filters are specified, show all schools in the location
-            if (!hasOptionalFilters) {
-              return true;
-            }
-
-            return matchesOptionalFilters;
+            print(
+                'Location match found for school: ${school['name']} in $subCity');
+            return true;
           }).toList();
 
           print('Filtered schools count: ${filteredSchools.length}');
+          print('Filtered schools: $filteredSchools');
 
           setState(() {
             _schools = filteredSchools
@@ -231,14 +244,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                     borderRadius: BorderRadius.circular(25),
                                   ),
                                   child: TextField(
+                                    controller: _searchController,
                                     decoration: InputDecoration(
-                                      hintText: 'Search',
+                                      hintText: 'Search by school name',
                                       hintStyle:
                                           TextStyle(color: Colors.grey[600]),
                                       prefixIcon: const Icon(
                                         Icons.search,
                                         color: Colors.grey,
                                       ),
+                                      suffixIcon:
+                                          _searchController.text.isNotEmpty
+                                              ? IconButton(
+                                                  icon: const Icon(Icons.clear,
+                                                      color: Colors.grey),
+                                                  onPressed: () {
+                                                    _searchController.clear();
+                                                  },
+                                                )
+                                              : null,
                                       border: InputBorder.none,
                                       contentPadding:
                                           const EdgeInsets.symmetric(
@@ -422,9 +446,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'Schools Near You',
-                                style: TextStyle(
+                              Text(
+                                _searchController.text.isNotEmpty
+                                    ? 'Search Results'
+                                    : 'Schools Near You',
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -439,27 +465,29 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          _schools.isEmpty
-                              ? const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 16),
-                                    child: Text(
-                                      'No schools found',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey,
+                          _searchController.text.isNotEmpty
+                              ? _searchResults.isEmpty
+                                  ? const Center(
+                                      child: Padding(
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 16),
+                                        child: Text(
+                                          'No schools found for this search',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                )
-                              : SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: _schools.map((school) {
-                                      final address =
-                                          school['address'] is List &&
+                                    )
+                                  : SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: _searchResults.map((school) {
+                                          final address = school['address']
+                                                      is List &&
                                                   (school['address'] as List)
                                                       .isNotEmpty
                                               ? (school['address'][0]
@@ -469,18 +497,61 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   'subCity': 'Unknown'
                                                 };
 
-                                      return _buildSchoolCard(
-                                        school['name'] ?? 'Unknown School',
-                                        '${address['subCity'] ?? 'Unknown'}, ${address['city'] ?? 'Unknown'}',
-                                        school['schoolType'] ?? 'Unknown',
-                                        'K-12',
-                                        '4.0',
-                                        'assets/images/school1.jpg',
-                                        fullSchoolObj: school,
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
+                                          return _buildSchoolCard(
+                                            school['name'] ?? 'Unknown School',
+                                            '${address['subCity'] ?? 'Unknown'}, ${address['city'] ?? 'Unknown'}',
+                                            school['schoolType'] ?? 'Unknown',
+                                            'K-12',
+                                            '4.0',
+                                            'assets/images/school1.jpg',
+                                            fullSchoolObj: school,
+                                          );
+                                        }).toList(),
+                                      ),
+                                    )
+                              : _schools.isEmpty
+                                  ? Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        child: Text(
+                                          'No schools found in ${_filterAnswers['location']?.join(', ') ?? 'selected location'}',
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: _schools.map((school) {
+                                          final address = school['address']
+                                                      is List &&
+                                                  (school['address'] as List)
+                                                      .isNotEmpty
+                                              ? (school['address'][0]
+                                                  as Map<String, dynamic>)
+                                              : {
+                                                  'city': 'Unknown',
+                                                  'subCity': 'Unknown'
+                                                };
+
+                                          return _buildSchoolCard(
+                                            school['name'] ?? 'Unknown School',
+                                            '${address['subCity'] ?? 'Unknown'}, ${address['city'] ?? 'Unknown'}',
+                                            school['schoolType'] ?? 'Unknown',
+                                            'K-12',
+                                            '4.0',
+                                            'assets/images/school1.jpg',
+                                            fullSchoolObj: school,
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
                         ],
                       ),
                     ),
@@ -510,7 +581,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 8),
                           _buildLocationCard(
-                              'Bole', '${_schools.length} schools'),
+                            _filterAnswers['location'] != null &&
+                                    _filterAnswers['location']!.isNotEmpty
+                                ? _filterAnswers['location']!.join(', ')
+                                : 'Unknown Location',
+                            '${_schools.length} schools',
+                          ),
                         ],
                       ),
                     ),

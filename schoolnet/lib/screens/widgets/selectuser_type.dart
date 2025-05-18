@@ -176,36 +176,68 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      width: 100,
-                      height: 100,
-                      child: ElevatedButton(
-                        onPressed:
-                            _isLoading ? null : () => _updateUserRole('parent'),
-                        style: ElevatedButton.styleFrom(
-                          shape: const CircleBorder(),
-                          padding: const EdgeInsets.all(20),
-                          backgroundColor:
-                              const Color.fromARGB(255, 229, 206, 234),
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: 100,
+                          height: 100,
+                          child: ElevatedButton(
+                            onPressed: _isLoading
+                                ? null
+                                : () => _updateUserRole('parent'),
+                            style: ElevatedButton.styleFrom(
+                              shape: const CircleBorder(),
+                              padding: const EdgeInsets.all(20),
+                              backgroundColor:
+                                  const Color.fromARGB(255, 229, 206, 234),
+                            ),
+                            child: Image.asset("assets/images/person_icon.png"),
+                          ),
                         ),
-                        child: Image.asset("assets/images/person_icon.png"),
-                      ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Text(
+                          'Parent',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF4A2C2A),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(width: 40),
-                    SizedBox(
-                      width: 100,
-                      height: 100,
-                      child: ElevatedButton(
-                        onPressed:
-                            _isLoading ? null : () => _updateUserRole('school'),
-                        style: ElevatedButton.styleFrom(
-                          shape: const CircleBorder(),
-                          padding: const EdgeInsets.all(20),
-                          backgroundColor:
-                              const Color.fromARGB(255, 229, 206, 234),
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: 100,
+                          height: 100,
+                          child: ElevatedButton(
+                            onPressed: _isLoading
+                                ? null
+                                : () => _updateUserRole('school'),
+                            style: ElevatedButton.styleFrom(
+                              shape: const CircleBorder(),
+                              padding: const EdgeInsets.all(20),
+                              backgroundColor:
+                                  const Color.fromARGB(255, 229, 206, 234),
+                            ),
+                            child: Image.asset("assets/images/school_icon.png"),
+                          ),
                         ),
-                        child: Image.asset("assets/images/school_icon.png"),
-                      ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Text(
+                          'School',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF4A2C2A),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

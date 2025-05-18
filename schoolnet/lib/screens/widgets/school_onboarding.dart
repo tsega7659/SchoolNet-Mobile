@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:schoolnet/screens/school/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -17,15 +18,17 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
   final TextEditingController _locationController = TextEditingController();
   List<int> _pages = [];
 
+  bool _isNavigating = false;
+
   final Map<String, dynamic> filterAnswers = {
-    'numChildren': ['One'],
-    'sameSchool': ['No'],
-    'schoolType': ['Private'],
-    'gradeLevel': ['KG'],
-    'tuitionFee': ['1000-3000'],
-    'budgetMin': 1000,
-    'budgetMax': 3000,
-    'location': ['Bole'],
+    'numChildren': [],
+    'sameSchool': [],
+    'schoolType': [],
+    'gradeLevel': [],
+    'tuitionFee': [],
+    'budgetMin': 0,
+    'budgetMax': 0,
+    'location': [],
   };
 
   final List<String> _locations = [
@@ -92,10 +95,12 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
     final body = {
       'numberOfChildren': filterAnswers['numChildren']![0].toLowerCase(),
       'childrenDetails': {
-        'gradeLevels':
-            filterAnswers['gradeLevel']!.map((e) => e.toLowerCase()).toList(),
-        'schoolType':
-            filterAnswers['schoolType']!.map((e) => e.toLowerCase()).toList(),
+        'gradeLevels': filterAnswers['gradeLevel']!
+            .map((e) => e.toString().toLowerCase())
+            .toList(),
+        'schoolType': filterAnswers['schoolType']!
+            .map((e) => e.toString().toLowerCase())
+            .toList(),
         'sameSchool': filterAnswers['sameSchool']![0].toLowerCase() == 'yes'
             ? true
             : false,
@@ -259,7 +264,6 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
   }
 
   Future<void> _saveProfileAndNavigate() async {
-    // First, check if current page has an answer
     final currentKey = _questions[_currentPage]['key'];
     if (filterAnswers[currentKey]!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -271,7 +275,6 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
       return;
     }
 
-    // If not last page, go to next page
     if (_currentPage < _questions.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -312,7 +315,6 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
       return;
     }
 
-    // All questions answered - proceed with profile creation
     _setBudgetRange(filterAnswers['tuitionFee']![0]);
 
     final token = _authService.jwtToken;
@@ -322,15 +324,50 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
           content: Text('No authentication token available. Please log in.'),
         ),
       );
-      Navigator.pushNamed(context, '/register');
+      Navigator.pushNamed(context, '/login');
       return;
     }
+
+    setState(() {
+      _isNavigating = true;
+    });
 
     try {
       bool hasProfile = await _checkParentProfile();
       if (!hasProfile) {
         await _createParentProfile();
       }
+      print('filterAnswers before profile update: $filterAnswers');
+      final profileData = {
+        'numberOfChildren': filterAnswers['numChildren']!.isNotEmpty
+            ? filterAnswers['numChildren']![0].toLowerCase()
+            : 'one',
+        'childrenDetails': {
+          'gradeLevels': filterAnswers['gradeLevel']!.isNotEmpty
+              ? (filterAnswers['gradeLevel']! as List<dynamic>)
+                  .map((e) => e.toString().toLowerCase())
+                  .toList()
+              : ['kg'],
+          'schoolType': filterAnswers['schoolType']!.isNotEmpty
+              ? (filterAnswers['schoolType']! as List<dynamic>)
+                  .map((e) => e.toString().toLowerCase())
+                  .toList()
+              : ['private'],
+          'sameSchool': filterAnswers['sameSchool']!.isNotEmpty
+              ? filterAnswers['sameSchool']![0].toLowerCase() == 'yes'
+              : false,
+        },
+        'address': {
+          'city': 'Addis Ababa',
+          'subCity': filterAnswers['location']!.isNotEmpty
+              ? filterAnswers['location']![0]
+              : 'Bole',
+        },
+        'budgetMin': filterAnswers['budgetMin'] ?? 1000,
+        'budgetMax': filterAnswers['budgetMax'] ?? 3000,
+      };
+
+      print('Updating profile with data: $profileData');
 
       final response = await http.patch(
         Uri.parse('https://schoolnet-be.onrender.com/api/v1/parentProfiles'),
@@ -339,35 +376,33 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
           'Authorization': 'Bearer $token',
           'Cookie': 'jwt=$token',
         },
-        body: jsonEncode({
-          'numberOfChildren': filterAnswers['numChildren']![0].toLowerCase(),
-          'childrenDetails': {
-            'gradeLevels': filterAnswers['gradeLevel']!
-                .map((e) => e.toLowerCase())
-                .toList(),
-            'schoolType': filterAnswers['schoolType']!
-                .map((e) => e.toLowerCase())
-                .toList(),
-            'sameSchool': filterAnswers['sameSchool']![0].toLowerCase() == 'yes'
-                ? true
-                : false,
-          },
-          'address': {
-            'city': 'Addis Ababa',
-            'subCity': filterAnswers['location']![0],
-          },
-          'budgetMin': filterAnswers['budgetMin'],
-          'budgetMax': filterAnswers['budgetMax'],
-        }),
+        body: jsonEncode(profileData),
       );
 
       print('Update profile response: ${response.statusCode} ${response.body}');
       final json = jsonDecode(response.body);
+      print('Parsed response data: ${json['data']}');
       if (response.statusCode == 200) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('parent_profile', jsonEncode(json['data']));
         await prefs.setBool('onboarding_completed', true);
-        Navigator.pushReplacementNamed(context, '/home');
+
+        final filterAnswersForNavigation =
+            Map<String, List<String>>.fromEntries(
+          filterAnswers.entries
+              .where((entry) => entry.value is List<String>)
+              .map((entry) =>
+                  MapEntry(entry.key, List<String>.from(entry.value))),
+        );
+        print('filterAnswersForNavigation: $filterAnswersForNavigation');
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                HomeScreen(filterAnswers: filterAnswersForNavigation),
+          ),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -379,6 +414,10 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating profile: $e')),
       );
+    } finally {
+      setState(() {
+        _isNavigating = false;
+      });
     }
   }
 
@@ -604,8 +643,10 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
                                           backgroundColor: isSelected
                                               ? const Color(0xFFB188E3)
                                               : Colors.white,
-                                          side: const BorderSide(
-                                              color: Color(0xFFB188E3)),
+                                          side: BorderSide(
+                                              color: isSelected
+                                                  ? const Color(0xFFB188E3)
+                                                  : Colors.grey[300]!),
                                           shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(25)),
@@ -715,6 +756,13 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
                 ),
               ),
             ),
+            if (_isNavigating)
+              Container(
+                color: Colors.black.withOpacity(0.5),
+                child: const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFB188E3)),
+                ),
+              ),
           ],
         ),
       ),

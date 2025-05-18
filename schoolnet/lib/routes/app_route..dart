@@ -15,7 +15,7 @@ import 'package:schoolnet/screens/school/staff.dart';
 import 'package:schoolnet/screens/school/staff_detail.dart';
 import 'package:schoolnet/screens/widgets/onboarding_screen.dart' as onboarding;
 import 'package:schoolnet/screens/auth/reset_password_screen.dart';
-import 'package:schoolnet/screens/widgets/school_filter_screen.dart';
+import 'package:schoolnet/screens/widgets/school_onboarding.dart';
 import 'package:schoolnet/screens/widgets/selectuser_type.dart'
     as selectUserType;
 import 'package:schoolnet/screens/auth/signup_screen.dart';
@@ -56,7 +56,11 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const SignUpScreen());
       case home:
         return MaterialPageRoute(
-          builder: (_) => const HomeScreen(filterAnswers: {}),
+          builder: (_) => HomeScreen(
+            filterAnswers: settings.arguments is Map<String, List<String>>
+                ? settings.arguments as Map<String, List<String>>
+                : {},
+          ),
         );
       case onboardingScreen:
         return MaterialPageRoute(
