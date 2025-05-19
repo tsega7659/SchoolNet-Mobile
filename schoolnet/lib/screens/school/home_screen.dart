@@ -98,24 +98,9 @@ class _HomeScreenState extends State<HomeScreen> {
           final allSchools = data['data']['schools'] as List;
           print('Total schools fetched: ${allSchools.length}');
 
-          // Log schools in the selected location
-          final locationSchools = allSchools.where((school) {
-            final schoolAddress = school['address'] as List?;
-            String? subCity;
-            if (schoolAddress != null && schoolAddress.isNotEmpty) {
-              subCity =
-                  schoolAddress[0]['subCity']?.toString().toLowerCase().trim();
-            }
-            return _filterAnswers['location']
-                    ?.map((loc) => loc.toLowerCase().trim())
-                    .contains(subCity) ??
-                false;
-          }).toList();
-          print(
-              'Schools in location ${_filterAnswers['location']}: $locationSchools');
-
+          // Filter schools based on location and category
           final filteredSchools = allSchools.where((school) {
-            // Location filter (only criteria)
+            // Location filter
             final userLocations = _filterAnswers['location']
                     ?.map((loc) => loc.toLowerCase().trim())
                     .toList() ??
@@ -126,14 +111,16 @@ class _HomeScreenState extends State<HomeScreen> {
               final address = schoolAddress[0] as Map<String, dynamic>;
               subCity = address['subCity']?.toString().toLowerCase().trim();
             }
-            print(
-                'Comparing userLocations: $userLocations with school subCity: $subCity');
-            if (subCity == null || !userLocations.contains(subCity)) {
-              return false;
-            }
-            print(
-                'Location match found for school: ${school['name']} in $subCity');
-            return true;
+            final locationMatch =
+                subCity != null && userLocations.contains(subCity);
+
+            // Category filter
+            final categoryMatch = _selectedCategory == null ||
+                _mapCategoryToGradeLevel(_selectedCategory!) ==
+                    (school['schoolType']?.toString().toLowerCase().trim() ??
+                        'unknown');
+
+            return locationMatch && categoryMatch;
           }).toList();
 
           print('Filtered schools count: ${filteredSchools.length}');
@@ -417,6 +404,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Row(
                               children: [
                                 _buildCategoryButton(
+                                  'All',
+                                  'assets/images/highschool_image.png',
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedCategory = null;
+                                      _fetchFilteredSchools();
+                                    });
+                                  },
+                                ),
+                                _buildCategoryButton(
                                   'KG',
                                   'assets/images/primary_image.png',
                                 ),
@@ -667,16 +664,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoryButton(String title, String imagePath) {
+  Widget _buildCategoryButton(String title, String imagePath,
+      {VoidCallback? onTap}) {
     bool isSelected = _selectedCategory == title;
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedCategory = _selectedCategory == title ? null : title;
-          _fetchFilteredSchools(); // Refetch and filter schools based on category
-        });
-      },
+      onTap: onTap ??
+          () {
+            setState(() {
+              _selectedCategory = _selectedCategory == title ? null : title;
+              _fetchFilteredSchools(); // Refetch and filter schools based on category
+            });
+          },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
