@@ -40,6 +40,7 @@ dependencies:
   app_links: ^6.4.0
   shared_preferences: ^2.5.3
   cached_network_image: ^3.4.1
+  url_launcher: ^6.2.5
 
 dev_dependencies:
   flutter_test:
@@ -87,6 +88,10 @@ flutter:
      - assets/images/user.png
      - assets/images/schoolnetlogo.png
      - assets/images/schoolnetlogo.svg
+     - assets/images/library_image.jpg
+     - assets/images/science_Lab.webp
+     
+
 
   #   - images/a_dot_ham.jpeg
 

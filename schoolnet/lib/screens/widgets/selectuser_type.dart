@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:schoolnet/services/auth_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class UserTypeScreen extends StatefulWidget {
   const UserTypeScreen({super.key});
@@ -95,13 +96,88 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                     color: Color(0xFF4A2C2A),
                   ),
                 ),
-                content: const Text(
-                  'For a better experience, please use our website.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF4A2C2A),
-                  ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'For a better experience, please use our website.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF4A2C2A),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFFB188E3),
+                            Color.fromARGB(255, 74, 42, 69),
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () async {
+                          // Close the dialog
+                          Navigator.of(context).pop();
+                          // Open the website
+                          final Uri url =
+                              Uri.parse('https://schoolnet-alpha.vercel.app/');
+                          try {
+                            final bool canLaunch = await canLaunchUrl(url);
+                            if (!canLaunch) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Cannot launch website'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+
+                            await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                              webViewConfiguration: const WebViewConfiguration(
+                                enableJavaScript: true,
+                                enableDomStorage: true,
+                              ),
+                            );
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error launching website: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: const Text(
+                          'Go to Website',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 actions: [
                   Center(
@@ -110,7 +186,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                         Navigator.of(context).pop();
                       },
                       child: const Text(
-                        'OK',
+                        'Cancel',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

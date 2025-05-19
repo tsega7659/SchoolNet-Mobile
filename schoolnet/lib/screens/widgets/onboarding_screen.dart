@@ -136,22 +136,8 @@ class OnboardingPageWidget extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 30),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                currentPage > 0
-                    ? TextButton(
-                        onPressed: onPrevious,
-                        child: const Text(
-                          'Back',
-                          style: TextStyle(
-                            fontFamily: 'WorkSans',
-                            color: Color(0xFFB188E3),
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      )
-                    : const SizedBox(width: 0),
                 TextButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/login');
@@ -201,11 +187,47 @@ class OnboardingPageWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 150),
-          // Next Button
+          // Navigation Buttons
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              if (currentPage > 0)
+                Container(
+                  height: 56,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFB188E3),
+                          Color.fromARGB(255, 74, 42, 69),
+                        ],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: onPrevious,
+                      child: const Text(
+                        'Back',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(width: 100),
               Container(
                 height: 56,
                 child: Container(

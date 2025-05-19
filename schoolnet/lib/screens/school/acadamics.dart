@@ -9,8 +9,6 @@ class AcadamicsScreen extends StatefulWidget {
 }
 
 class _AcadamicsScreenState extends State<AcadamicsScreen> {
- 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +23,6 @@ class _AcadamicsScreenState extends State<AcadamicsScreen> {
         foregroundColor: Colors.black,
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
-
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
@@ -36,12 +33,12 @@ class _AcadamicsScreenState extends State<AcadamicsScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Dandiboru School is dedicated to providing high-quality education through the British Curriculum.',
+              'Our School is dedicated to providing high-quality education through the British Curriculum.',
               style: TextStyle(fontSize: 15, color: Colors.black87),
             ),
             const SizedBox(height: 20),
             const Text(
-              'Average Matrix Results',
+              'Average Matrics Results',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
@@ -83,6 +80,34 @@ class _AcadamicsScreenState extends State<AcadamicsScreen> {
                 _buildPill('Tennis'),
                 _buildPill('Soccer'),
                 _buildPill('BasketBall'),
+                _buildPill('Cricket'),
+                _buildPill('Athletics'),
+                _buildPill('Table Tennis'),
+                _buildPill('Volleyball'),
+                _buildPill('Handball'),
+                _buildPill('Taekwondo'),
+                _buildPill('Cycling'),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Clubs',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildPill('Art Club'),
+                _buildPill('Drama Club'),
+                _buildPill('Music Club'),
+                _buildPill('Debate Club'),
+                _buildPill('Science Club'),
+                _buildPill('Literature Club'),
+                _buildPill('Photography Club'),
+                _buildPill('Coding Club'),
+                _buildPill('Environment Club'),
               ],
             ),
           ],

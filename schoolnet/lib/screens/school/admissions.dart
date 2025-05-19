@@ -9,8 +9,6 @@ class AddmissionsScreen extends StatefulWidget {
 }
 
 class _AddmissionsScreenState extends State<AddmissionsScreen> {
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +23,6 @@ class _AddmissionsScreenState extends State<AddmissionsScreen> {
         foregroundColor: Colors.black,
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
-
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
@@ -36,7 +33,7 @@ class _AddmissionsScreenState extends State<AddmissionsScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Applicants to Dandiboru School must meet age requirements, submit previous academic records, and may need to take an entrance assessment.',
+              'Applicants  must meet age requirements, submit previous academic records, and may need to take an entrance assessment.',
               style: TextStyle(fontSize: 15, color: Colors.black87),
             ),
             const SizedBox(height: 20),
@@ -64,7 +61,7 @@ class _AddmissionsScreenState extends State<AddmissionsScreen> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
-            _buildBulletedList(['Application Open Date: [Insert Date]']),
+            _buildBulletedList(['Application Open Date: June 25 - July 10']),
           ],
         ),
       ),
@@ -95,22 +92,21 @@ class _AddmissionsScreenState extends State<AddmissionsScreen> {
   Widget _buildBulletedList(List<String> items) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children:
-          items.map((item) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 6.0, left: 16.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '\u2022 ',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Expanded(child: Text(item)),
-                ],
+      children: items.map((item) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 6.0, left: 16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '\u2022 ',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-            );
-          }).toList(),
+              Expanded(child: Text(item)),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

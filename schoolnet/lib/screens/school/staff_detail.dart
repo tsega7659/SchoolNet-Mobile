@@ -47,39 +47,39 @@ class StaffDetail extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             // Reviews Section
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Reviews',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ),
+            // const Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: 16),
+            //   child: Align(
+            //     alignment: Alignment.centerLeft,
+            //     child: Text(
+            //       'Reviews',
+            //       style: TextStyle(
+            //         fontSize: 18,
+            //         fontWeight: FontWeight.bold,
+            //         color: Colors.black,
+            //       ),
+            //     ),
+            //   ),
+            // ),
             const SizedBox(height: 16),
             // Review Cards
-            _buildReviewCard(
-              context,
-              name: 'John Smith',
-              role: 'Parent',
-              rating: 4.5,
-              review:
-                  'Lorem ipsum dolor sit amet consectetur. Hac amet tincidunt interdum ut suspendisse cursus. Erat tincidunt dolor quam varius tristique neque diam.',
-            ),
-            const SizedBox(height: 16),
-            _buildReviewCard(
-              context,
-              name: 'John Smith',
-              role: 'Parent',
-              rating: 4.5,
-              review:
-                  'Lorem ipsum dolor sit amet consectetur. Hac amet tincidunt interdum ut suspendisse cursus. Erat tincidunt dolor quam varius tristique neque diam.',
-            ),
+            // _buildReviewCard(
+            //   context,
+            //   name: 'Abebe Kebede',
+            //   role: 'Parent',
+            //   rating: 4.5,
+            //   review:
+            //       'Lorem ipsum dolor sit amet consectetur. Hac amet tincidunt interdum ut suspendisse cursus. Erat tincidunt dolor quam varius tristique neque diam.',
+            // ),
+            // const SizedBox(height: 16),
+            // _buildReviewCard(
+            //   context,
+            //   name: 'John Smith',
+            //   role: 'Parent',
+            //   rating: 4.5,
+            //   review:
+            //       'Lorem ipsum dolor sit amet consectetur. Hac amet tincidunt interdum ut suspendisse cursus. Erat tincidunt dolor quam varius tristique neque diam.',
+            // ),
             const SizedBox(height: 24),
             // Contact Section
             Container(
@@ -99,12 +99,12 @@ class StaffDetail extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Email: teacher.john@example.com',
+                    'Email: teacher.abeba@example.com',
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Telegram: @teacherjohnt',
+                    'Telegram: @teacherAbeba',
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                   const SizedBox(height: 16),
@@ -120,9 +120,7 @@ class StaffDetail extends StatelessWidget {
                   Row(
                     children: [
                       GestureDetector(
-                        onTap: () {
-                          // Add LinkedIn navigation logic here
-                        },
+                        onTap: () {},
                         child: const Text(
                           'LinkedIn',
                           style: TextStyle(
@@ -156,96 +154,97 @@ class StaffDetail extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildReviewCard(
-    BuildContext context, {
-    required String name,
-    required String role,
-    required double rating,
-    required String review,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const CircleAvatar(
-              radius: 24,
-              backgroundImage: AssetImage('assets/images/reviewer.jpg'),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          role,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.amber, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        rating.toString(),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    review,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
+
+//   Widget _buildReviewCard(
+//     BuildContext context, {
+//     required String name,
+//     required String role,
+//     required double rating,
+//     required String review,
+//   }) {
+//     return Padding(
+//       padding: const EdgeInsets.symmetric(horizontal: 16),
+//       child: Container(
+//         padding: const EdgeInsets.all(16),
+//         decoration: BoxDecoration(
+//           color: Colors.white,
+//           borderRadius: BorderRadius.circular(16),
+//           boxShadow: [
+//             BoxShadow(
+//               color: Colors.black.withOpacity(0.05),
+//               blurRadius: 8,
+//               offset: const Offset(0, 2),
+//             ),
+//           ],
+//         ),
+//         child: Row(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             const CircleAvatar(
+//               radius: 24,
+//               backgroundImage: AssetImage('assets/images/reviewer.jpg'),
+//             ),
+//             const SizedBox(width: 16),
+//             Expanded(
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                     children: [
+//                       Text(
+//                         name,
+//                         style: const TextStyle(
+//                           fontWeight: FontWeight.bold,
+//                           fontSize: 16,
+//                         ),
+//                       ),
+//                       const SizedBox(width: 8),
+//                       Container(
+//                         padding: const EdgeInsets.symmetric(
+//                           horizontal: 8,
+//                           vertical: 4,
+//                         ),
+//                         decoration: BoxDecoration(
+//                           color: const Color(0xFFF5F5F5),
+//                           borderRadius: BorderRadius.circular(12),
+//                         ),
+//                         child: Text(
+//                           role,
+//                           style: const TextStyle(
+//                             fontSize: 12,
+//                             color: Colors.black,
+//                           ),
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                   const SizedBox(height: 4),
+//                   Row(
+//                     children: [
+//                       Icon(Icons.star, color: Colors.amber, size: 16),
+//                       const SizedBox(width: 4),
+//                       Text(
+//                         rating.toString(),
+//                         style: const TextStyle(
+//                           fontWeight: FontWeight.bold,
+//                           fontSize: 14,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                   const SizedBox(height: 8),
+//                   Text(
+//                     review,
+//                     style: const TextStyle(fontSize: 14, color: Colors.grey),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }

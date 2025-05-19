@@ -14,10 +14,8 @@ class _FiltersScreenState extends State<FiltersScreen> {
   final Map<String, List<String>> _selectedFilters = {
     'Price': [],
     'Grade Level': [],
-    'Review': [],
     'Language': [],
     'School Type': [],
-    'Gender': [],
     'School Format': [],
     'Location': [],
   };
@@ -25,10 +23,8 @@ class _FiltersScreenState extends State<FiltersScreen> {
   final Map<String, bool> _isExpanded = {
     'Price': false,
     'Grade Level': false,
-    'Review': false,
     'Language': false,
     'School Type': false,
-    'Gender': false,
     'School Format': false,
     'Location': false,
   };
@@ -36,10 +32,8 @@ class _FiltersScreenState extends State<FiltersScreen> {
   final Map<String, List<String>> _filterOptions = {
     'Price': ['1000-3000', '4000-6000', '7000-10000', '>10000'],
     'Grade Level': ['kg', 'primary', 'middle', 'high'],
-    'Review': ['2 Stars', '3 Stars', '4 Stars', '5 Stars'],
     'Language': ['English', 'Amharic', 'French'],
     'School Type': ['public', 'private', 'international', 'faith'],
-    'Gender': ['Both', 'Female', 'Male'],
     'School Format': ['Day', 'Boarding', 'Both'],
     'Location': [
       'Addis Ababa',
@@ -150,17 +144,6 @@ class _FiltersScreenState extends State<FiltersScreen> {
     if (selectedSchoolType!.isNotEmpty) {
       filtersToApply['schoolType'] =
           selectedSchoolType.map((e) => e.toLowerCase()).toList();
-    }
-
-    final selectedGender = _selectedFilters['Gender'];
-    if (selectedGender!.isNotEmpty) {
-      filtersToApply['gender'] = selectedGender.first;
-    }
-
-    final selectedReview = _selectedFilters['Review'];
-    if (selectedReview!.isNotEmpty) {
-      filtersToApply['googleRatings'] =
-          int.tryParse(selectedReview.first.replaceAll(' Stars', '')) ?? 0;
     }
 
     final selectedLocation = _selectedFilters['Location'];

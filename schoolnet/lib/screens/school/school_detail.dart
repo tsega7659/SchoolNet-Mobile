@@ -103,7 +103,7 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 150, // Adjust based on design
+          height: 200, // Adjust based on design
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -118,10 +118,14 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                     ? 'https://schoolnet-be.onrender.com/uploads/$imgPath'
                     : null;
 
+                print('Facility: ${facility['name']}, Image path: $imgPath');
+                print('Attempting to load facility image from: $imageUrl');
+
                 return Container(
-                  width: 120,
+                  width: 180,
                   margin: const EdgeInsets.only(right: 16),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ClipRRect(
@@ -129,44 +133,115 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                         child: imageUrl != null
                             ? CachedNetworkImage(
                                 imageUrl: imageUrl,
-                                httpHeaders: {
-                                  'Cookie':
-                                      'jwt=${AuthService().jwtToken ?? ''}',
-                                },
-                                height: 100,
-                                width: 120,
+                                height: 130,
+                                width: 180,
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) => Container(
-                                  height: 100,
-                                  width: 120,
-                                  color: Colors.grey[300],
+                                  height: 130,
+                                  width: 180,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                   child: const Center(
-                                      child: CircularProgressIndicator()),
+                                    child: CircularProgressIndicator(),
+                                  ),
                                 ),
                                 errorWidget: (context, url, error) {
                                   print(
                                       'Failed to load facility image: $imageUrl, error: $error');
+                                  String placeholderImage =
+                                      'assets/images/library_image.jpg';
+
+                                  // Choose appropriate placeholder based on facility name
+                                  if (facility['name']
+                                          ?.toString()
+                                          .toLowerCase()
+                                          .contains('lab') ??
+                                      false) {
+                                    placeholderImage =
+                                        'assets/images/science_Lab.webp';
+                                  } else if (facility['name']
+                                          ?.toString()
+                                          .toLowerCase()
+                                          .contains('library') ??
+                                      false) {
+                                    placeholderImage =
+                                        'assets/images/library_image.jpg';
+                                  }
+
                                   return Container(
-                                    height: 100,
-                                    width: 120,
-                                    color: Colors.grey[300],
-                                    child: const Center(
-                                        child: Text('Image Unavailable')),
+                                    height: 130,
+                                    width: 180,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.asset(
+                                        placeholderImage,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.image_not_supported,
+                                                  color: Colors.grey[600],
+                                                  size: 32),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                facility['name'] ?? 'No Image',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 14,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ),
                                   );
                                 },
                               )
                             : Container(
-                                height: 100,
-                                width: 120,
-                                color: Colors.grey[300],
-                                child: const Center(child: Text('No Image')),
+                                height: 130,
+                                width: 180,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.image_not_supported,
+                                        color: Colors.grey[600], size: 32),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      facility['name'] ?? 'No Image',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 14,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
                               ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       Text(
-                        name,
+                        facility['name'] ?? 'Unknown Facility',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 18,
                           fontWeight: FontWeight.w500,
                         ),
                         maxLines: 2,
@@ -484,7 +559,7 @@ class _SchoolDetailPageState extends State<SchoolDetailPage> {
                   ),
                   const SizedBox(height: 16),
                   // Facilities Section
-                  _buildFacilitiesSection(schoolDetails['schoolFacilities']),
+                  _buildFacilitiesSection(schoolDetails['schoolFacilites']),
                   const SizedBox(height: 16),
                   // Admissions
                   GestureDetector(

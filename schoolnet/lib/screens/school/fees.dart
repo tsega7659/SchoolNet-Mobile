@@ -11,32 +11,29 @@ class FeesScreen extends StatefulWidget {
 class _FeesScreenState extends State<FeesScreen> {
   int _currentIndex = 0;
 
- 
-
   @override
   Widget build(BuildContext context) {
     final List<Map<String, String>> fees = [
       {
         'title': 'Early Learning Center',
-        'fee': '5,000',
-        'spots': 'Available spots - 20',
+        'fee': '3,000',
+        'spots': 'Available spots - 100',
       },
       {
         'title': 'Grade 1 - Grade 4',
         'fee': '5,000',
-        'spots': 'Available spots - 20',
+        'spots': 'Available spots - 200',
       },
       {
         'title': 'Grade 4 - Grade 8',
-        'fee': '5,000',
-        'spots': 'Available spots - 20',
+        'fee': '6,000',
+        'spots': 'Available spots - 60',
       },
       {
         'title': 'Grade 8 - Grade 12',
-        'fee': '5,000',
-        'spots': 'Available spots - 20',
+        'fee': '10,000',
+        'spots': 'Available spots - 50',
       },
-      {'title': 'University', 'fee': '5,000', 'spots': 'Available spots - 20'},
     ];
 
     return Scaffold(
@@ -50,7 +47,7 @@ class _FeesScreenState extends State<FeesScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
-            bottomNavigationBar: const BottomNavBar(currentIndex: 0),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -64,8 +61,8 @@ class _FeesScreenState extends State<FeesScreen> {
             Expanded(
               child: ListView.separated(
                 itemCount: fees.length,
-                separatorBuilder:
-                    (context, index) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final item = fees[index];
                   return Container(

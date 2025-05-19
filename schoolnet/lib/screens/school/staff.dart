@@ -40,7 +40,6 @@ class _StaffScreenState extends State<StaffScreen> {
         ],
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
-
       backgroundColor: Colors.white,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,10 +98,9 @@ class _StaffScreenState extends State<StaffScreen> {
                       label: Text(
                         chips[index],
                         style: TextStyle(
-                          color:
-                              selectedChip == index
-                                  ? Colors.white
-                                  : Colors.black,
+                          color: selectedChip == index
+                              ? Colors.white
+                              : Colors.black,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -163,7 +161,7 @@ class _StaffScreenState extends State<StaffScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
                               Text(
-                                'Jane Copper',
+                                'Abeba Abebe',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -171,7 +169,7 @@ class _StaffScreenState extends State<StaffScreen> {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                'Leading psychologist in cognitive function.',
+                                'Msc in Mathematics',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey,
@@ -206,33 +204,6 @@ class _StaffScreenState extends State<StaffScreen> {
             ),
           ),
           // Add To My List Button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Add "Add To My List" logic here
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5A3B82),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Add To My List',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );

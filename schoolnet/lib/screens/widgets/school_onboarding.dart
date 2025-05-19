@@ -217,7 +217,7 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
           'key': 'gradeLevel',
         });
         _questions.add({
-          'question': 'What is your tuition fee budget (per year)?',
+          'question': 'What is your tuition fee budget?',
           'options': ['1000-3000', '4000-6000', '7000-15000', 'above 15000'],
           'key': 'tuitionFee',
         });
@@ -234,7 +234,7 @@ class _SchoolFilterScreenState extends State<SchoolFilterScreen> {
         'key': 'gradeLevel',
       });
       _questions.add({
-        'question': 'What is your tuition fee budget (per year)?',
+        'question': 'What is your tuition fee budget?',
         'options': ['1000-3000', '4000-6000', '7000-15000', 'above 15000'],
         'key': 'tuitionFee',
       });
