@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:schoolnet/screens/splash_screen.dart';
-import 'screens/signup_screen.dart';
+import 'package:schoolnet/routes/app_route..dart';
 
 void main() {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -16,11 +15,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'SchoolNet',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: Colors.white,
-        appBarTheme: const AppBarTheme(elevation: 0, centerTitle: true),
-      ),
-      home: SplashScreen(),
+      initialRoute: AppRoutes.splash,
+      onGenerateRoute: AppRoutes.generateRoute,
     );
   }
 }
