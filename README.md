@@ -46,19 +46,17 @@ Installation
 
 ```
 SchoolNet-Mobile/
-├── android/                # Android-specific configuration
-├── ios/                    # iOS-specific configuration
-├── lib/                    # Main application code
-│   ├── screens/            # UI screens
-│   ├── widgets/            # Reusable widgets
-│   ├── models/             # Data models
-│   ├── services/           # Services (e.g., API calls)
-│   ├── utils/              # Utility functions
-│   └── main.dart           # Entry point of the application
-├── assets/                 # Images, fonts, and other assets
-├── test/                   # Unit and widget tests
-├── pubspec.yaml            # Project metadata and dependencies
-└── README.md               # Project documentation
+├── android/                
+├── ios/                    
+├── lib/                    
+│   ├── screens/            UI screens
+│   ├── widgets/            Reusable widgets
+│   ├── models/             Data models
+│   ├── services/           Services (API calls)
+│   ├── utils/              Utility functions
+│   └── main.dart           
+├── assets/                 Images, fonts                
+├── pubspec.yaml            Project metadata and dependencies
 ```
 
 
