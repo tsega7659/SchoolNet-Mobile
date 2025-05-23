@@ -14,27 +14,21 @@ class _FiltersScreenState extends State<FiltersScreen> {
   final Map<String, List<String>> _selectedFilters = {
     'Price': [],
     'Grade Level': [],
-    'Language': [],
     'School Type': [],
-    'School Format': [],
     'Location': [],
   };
 
   final Map<String, bool> _isExpanded = {
     'Price': false,
     'Grade Level': false,
-    'Language': false,
     'School Type': false,
-    'School Format': false,
     'Location': false,
   };
 
   final Map<String, List<String>> _filterOptions = {
     'Price': ['1000-3000', '4000-6000', '7000-10000', '>10000'],
     'Grade Level': ['kg', 'primary', 'middle', 'high'],
-    'Language': ['English', 'Amharic', 'French'],
     'School Type': ['public', 'private', 'international', 'faith'],
-    'School Format': ['Day', 'Boarding', 'Both'],
     'Location': [
       'Addis Ababa',
       'Bole',
@@ -128,58 +122,75 @@ class _FiltersScreenState extends State<FiltersScreen> {
       return;
     }
 
-    final filtersToApply = <String, dynamic>{};
-
-    final selectedPrice = _selectedFilters['Price'];
-    if (selectedPrice!.isNotEmpty) {
-      final priceRange = selectedPrice.first.split('-');
-      filtersToApply['budgetMin'] =
-          int.tryParse(priceRange[0].replaceAll(RegExp(r'[^\d]'), '')) ?? 0;
-      filtersToApply['budgetMax'] = priceRange.length > 1
-          ? int.tryParse(priceRange[1].replaceAll(RegExp(r'[^\d]'), '')) ?? 0
-          : 100000;
-    }
-
-    final selectedSchoolType = _selectedFilters['School Type'];
-    if (selectedSchoolType!.isNotEmpty) {
-      filtersToApply['schoolType'] =
-          selectedSchoolType.map((e) => e.toLowerCase()).toList();
-    }
-
-    final selectedLocation = _selectedFilters['Location'];
-    if (selectedLocation!.isNotEmpty) {
-      filtersToApply['address'] = {
-        'city':
-            selectedLocation.contains('Addis Ababa') ? 'Addis Ababa' : 'Other',
-        'subCity': selectedLocation.first != 'Addis Ababa'
-            ? selectedLocation.first
-            : null,
-      };
-    }
-
     try {
-      final response = await http.post(
-        Uri.parse('https://schoolnet-be.onrender.com/api/v1/schools/filter'),
+      // First fetch all schools
+      final allSchoolsResponse = await http.get(
+        Uri.parse('https://schoolnet-be.onrender.com/api/v1/schools'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $jwtToken',
           'Cookie': 'jwt=$jwtToken',
         },
-        body: jsonEncode(filtersToApply),
       );
 
-      print('Filter schools response: ${response.statusCode} ${response.body}');
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      if (allSchoolsResponse.statusCode == 200) {
+        final allSchoolsData = jsonDecode(allSchoolsResponse.body);
+        List<dynamic> schools = [];
+
+        // Handle the response structure
+        if (allSchoolsData['status'] == 'success' &&
+            allSchoolsData['data'] != null) {
+          if (allSchoolsData['data'] is List) {
+            schools = allSchoolsData['data'];
+          } else if (allSchoolsData['data'] is Map) {
+            final data = allSchoolsData['data'];
+            if (data['parentProfile'] != null &&
+                data['parentProfile']['favoriteSchools'] != null) {
+              schools = data['parentProfile']['favoriteSchools'];
+            } else if (data['schools'] != null) {
+              schools = data['schools'];
+            } else {
+              // If no schools array found, create a list with the single school
+              schools = [data];
+            }
+          }
+        }
+
+        print('Found ${schools.length} schools before filtering');
+
+        // Apply filters locally
+        if (_selectedFilters['School Type']!.isNotEmpty) {
+          schools = schools.where((school) {
+            final schoolType =
+                school['schoolType']?.toString().toLowerCase() ?? '';
+            return _selectedFilters['School Type']!
+                .any((type) => schoolType.toLowerCase() == type.toLowerCase());
+          }).toList();
+          print('After school type filter: ${schools.length} schools');
+        }
+
+        if (_selectedFilters['Location']!.isNotEmpty) {
+          schools = schools.where((school) {
+            final location =
+                school['address']?[0]?['subCity']?.toString().toLowerCase() ??
+                    '';
+            return _selectedFilters['Location']!
+                .any((loc) => location.toLowerCase() == loc.toLowerCase());
+          }).toList();
+          print('After location filter: ${schools.length} schools');
+        }
+
+        print('Found ${schools.length} schools after filtering');
+
         Navigator.pushNamed(
           context,
           '/results',
           arguments: {
-            'filters': filtersToApply,
-            'schools': data['data'] ?? [],
+            'filters': _selectedFilters,
+            'schools': schools,
           },
         );
-      } else if (response.statusCode == 401) {
+      } else if (allSchoolsResponse.statusCode == 401) {
         await _authService.logout();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -189,7 +200,8 @@ class _FiltersScreenState extends State<FiltersScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Failed to fetch schools: ${response.statusCode}')),
+              content: Text(
+                  'Failed to fetch schools: ${allSchoolsResponse.statusCode}')),
         );
       }
     } catch (e) {
@@ -322,7 +334,9 @@ class _FiltersScreenState extends State<FiltersScreen> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => _applyFiltersAndNavigate(context),
+                onPressed: () async {
+                  await _applyFiltersAndNavigate(context);
+                },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

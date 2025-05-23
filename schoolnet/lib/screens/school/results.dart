@@ -30,16 +30,89 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _refetchSchools() async {
     try {
-      final response = await http.post(
-        Uri.parse('https://schoolnet-be.onrender.com/api/v1/schools/filter'),
+      final response = await http.get(
+        Uri.parse('https://schoolnet-be.onrender.com/api/v1/schools'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(filters),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        List<dynamic> allSchools = [];
+
+        // Handle the response structure
+        if (data['status'] == 'success' && data['data'] != null) {
+          if (data['data'] is List) {
+            allSchools = data['data'];
+          } else if (data['data'] is Map) {
+            final responseData = data['data'];
+            if (responseData['parentProfile'] != null &&
+                responseData['parentProfile']['favoriteSchools'] != null) {
+              allSchools = responseData['parentProfile']['favoriteSchools'];
+            } else if (responseData['schools'] != null) {
+              allSchools = responseData['schools'];
+            } else {
+              // If no schools array found, create a list with the single school
+              allSchools = [responseData];
+            }
+          }
+        }
+
+        print('Found ${allSchools.length} schools before filtering');
+
+        // Apply filters locally
+        if (filters['School Type']?.isNotEmpty ?? false) {
+          allSchools = allSchools.where((school) {
+            final schoolType =
+                school['schoolType']?.toString().toLowerCase() ?? '';
+            return filters['School Type']!
+                .any((type) => schoolType.toLowerCase() == type.toLowerCase());
+          }).toList();
+          print('After school type filter: ${allSchools.length} schools');
+        }
+
+        if (filters['Location']?.isNotEmpty ?? false) {
+          allSchools = allSchools.where((school) {
+            final location =
+                school['address']?[0]?['subCity']?.toString().toLowerCase() ??
+                    '';
+            return filters['Location']!
+                .any((loc) => location.toLowerCase() == loc.toLowerCase());
+          }).toList();
+          print('After location filter: ${allSchools.length} schools');
+        }
+
+        // Optional price filter
+        if (filters['Price']?.isNotEmpty ?? false) {
+          final priceRange = filters['Price']!.first.split('-');
+          final minPrice =
+              int.tryParse(priceRange[0].replaceAll(RegExp(r'[^\d]'), '')) ?? 0;
+          final maxPrice = priceRange.length > 1
+              ? int.tryParse(priceRange[1].replaceAll(RegExp(r'[^\d]'), '')) ??
+                  0
+              : 100000;
+
+          allSchools = allSchools.where((school) {
+            final price = school['price'] ?? 0;
+            return price >= minPrice && price <= maxPrice;
+          }).toList();
+          print('After price filter: ${allSchools.length} schools');
+        }
+
+        // Optional grade level filter
+        if (filters['Grade Level']?.isNotEmpty ?? false) {
+          allSchools = allSchools.where((school) {
+            final gradeLevels =
+                school['division']?.toString().toLowerCase() ?? '';
+            return filters['Grade Level']!.any(
+                (grade) => gradeLevels.toLowerCase() == grade.toLowerCase());
+          }).toList();
+          print('After grade level filter: ${allSchools.length} schools');
+        }
+
+        print('Found ${allSchools.length} schools after filtering');
+
         setState(() {
-          schools = data['schools'] ?? [];
+          schools = allSchools;
           resultCount = schools.length;
         });
       } else {
